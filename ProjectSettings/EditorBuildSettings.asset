@@ -1,0 +1,13 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1045 &1
+EditorBuildSettings:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Scenes:
+  - enabled: 1
+    path: Assets/Astra/Scenes/AstrasInfinitePole.unity
+    guid: 8a1cd5f07ca2eea4c893de00c2f15f3c
+  m_configObjects:
+    com.unity.xr.management.loader_settings: {fileID: 11400000, guid: a45021e60c2e54b49882cf5ff8ef01fd,
+      type: 2}
