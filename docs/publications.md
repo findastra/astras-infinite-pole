@@ -17,6 +17,7 @@ This update is not recorded as published until its upload and world version are 
 
 96m floor diameter; hand-together/pull-apart menu gesture without mandatory grips; close button and desktop M retained; video moved to the right; solid pole depth pass; much smaller glints with narrow rays and color changes; player-following glitter/cloud volumes; corrected incompatible orbital curve modes.
 
-Source and release tag must be pushed before VRChat upload. GitHub write authentication remains unresolved. No new live world version is claimed.
+Source and all historical tags were pushed to GitHub on 2026-09-14. Fine Magic source commit: 0eb35a0. Upload is awaiting the SDK copyright-ownership confirmation in visible Unity; no new live world version is claimed.
 
-Fine Magic: Unity/Udon checks and Windows bundle build passed on 2026-09-14. Local source tag: v0.4.0-fine-magic. Upload and remote source publication remain pending authentication.
+Fine Magic: Unity/Udon checks and Windows bundle build passed on 2026-09-14. Local source tag: v0.4.0-fine-magic. Remote source publication succeeded. VRChat upload remains pending the SDK ownership confirmation.
+
