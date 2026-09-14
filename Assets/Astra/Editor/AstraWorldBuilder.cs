@@ -197,7 +197,8 @@ public static class AstraWorldBuilder
         Physics.SyncTransforms();
         foreach(var p in new[]{new Vector3(0,1,-2),new Vector3(5,1,0),new Vector3(-10,1,0)})
             if(!Physics.Raycast(p,Vector3.down,out var hit,2)||!hit.collider.name.StartsWith("Invisible platform")) throw new Exception("Platform test failed: "+p);
-        for(int i=0;i<48;i++) {float a=i*Mathf.PI*2/48; if(!Physics.Raycast(new Vector3(0,1,0),new Vector3(Mathf.Sin(a),0,Mathf.Cos(a)),13)) throw new Exception("Missing boundary");}
+        float boundaryDistance=GameObject.Find("Boundary 00").transform.position.z+2;
+        for(int i=0;i<48;i++) {float a=i*Mathf.PI*2/48; if(!Physics.Raycast(new Vector3(0,1,0),new Vector3(Mathf.Sin(a),0,Mathf.Cos(a)),boundaryDistance)) throw new Exception("Missing boundary");}
         var c=UnityEngine.Object.FindObjectOfType<AstraControls>();
         if(c==null||c.music.clip==null||c.music.playOnAwake||c.backgroundSlider==null||c.sparkleSlider==null)throw new Exception("Incomplete controls");
         int particleCap=0;
@@ -231,3 +232,4 @@ public static class AstraWorldBuilder
         Debug.Log("ASTRA_READY_FOR_REVIEW");
     }
 }
+

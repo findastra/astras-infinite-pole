@@ -31,8 +31,8 @@ Material:
     m_Floats:
     - _Brightness: 1.3
     - _DriftSpeed: 0.004
-    - _Flow: 0.65
-    - _FlowSeed: 955.7512
+    - _Flow: 0.8
+    - _FlowSeed: 451.29953
     - _GradientScale: 0.12
     - _MorphSpeed: 0.0082
     - _Phase: 0.41099998

@@ -68,6 +68,8 @@ public static class AstraPlayCheck
             var magic=UnityEngine.Object.FindObjectOfType<AstraMagic>();
             if(magic!=null){
                 var mu=UdonSharpEditorUtility.GetBackingUdonBehaviour(magic);
+                Require(magic.glitterVolume!=null && Vector3.Distance(magic.glitterVolume.position,VRC.SDKBase.Networking.LocalPlayer.GetPosition())<.1f,"Glitter volume did not follow player");
+                Require(magic.cloudVolume!=null && Vector3.Distance(magic.cloudVolume.position,VRC.SDKBase.Networking.LocalPlayer.GetPosition()+Vector3.up*3.5f)<.1f,"Cloud volume did not follow player");
                 Require(magic.materials[0].GetFloat("_React")==1,"Player wake runtime update failed");
                 magic.trailToggle.isOn=true;foreach(var trail in magic.trails)Require(trail.isPlaying,"Trail toggle failed");
                 magic.trailToggle.isOn=false;foreach(var trail in magic.trails)Require(!trail.isPlaying&&trail.particleCount==0,"Trail clear failed");
@@ -78,7 +80,7 @@ public static class AstraPlayCheck
                 var hm=UnityEngine.Object.FindObjectOfType<AstraHandMenu>();var hu=UdonSharpEditorUtility.GetBackingUdonBehaviour(hm);
                 Require(!hm.menuRoot.gameObject.activeSelf,"Menu must initially be hidden");hu.SendCustomEvent("ToggleMenu");Require(hm.menuRoot.gameObject.activeSelf,"Menu summon failed");hu.SendCustomEvent("HideMenu");Require(!hm.menuRoot.gameObject.activeSelf,"Menu close failed");
                 Require(UnityEngine.Object.FindObjectOfType<UdonSharp.Video.USharpVideoPlayer>().shufflePlaylist,"Shuffle not enabled");
-                File.WriteAllText("Review/magic-play-check.txt","PASS: actual Udon player wake updates; body trails on/off and clear; cloud on/off and palette; translucent/solid pole; random pattern; initially hidden menu, summon and dismiss; playlist shuffle configuration.\nPhysical two-grip gesture, headset targeting, framerate, and live online shuffled playback remain unverified.");
+                File.WriteAllText("Review/magic-play-check.txt","PASS: actual Udon player wake updates; body trails on/off and clear; cloud on/off and palette; translucent/solid pole; random pattern; initially hidden menu, summon and dismiss; playlist shuffle configuration.\nPhysical hand gesture, headset targeting, framerate, and live online shuffled playback remain unverified.");
             }
             c.volumeSlider.SetValueWithoutNotify(1);udon.SendCustomEvent("SetVolume");
             Require(Mathf.Abs(c.music.volume-0.3f)<0.001f,"Volume event failed");
@@ -119,4 +121,5 @@ public static class AstraPlayCheck
         Debug.Log("ASTRA_GLITTER_PLAY_OK");
     }
 }
+
 

@@ -5,6 +5,22 @@ Shader "Astra/Infinite Pole"
  Tags { "RenderType"="Transparent" "Queue"="Transparent-10" }
  Blend SrcAlpha OneMinusSrcAlpha
  ZWrite Off
+ // Solid pole writes depth before transparent video and glitter. Translucent mode stays see-through.
+ Pass {
+  ColorMask 0
+  ZWrite On
+  CGPROGRAM
+  #pragma vertex depthVert
+  #pragma fragment depthFrag
+  #pragma multi_compile_instancing
+  #include "UnityCG.cginc"
+  struct dIn {float4 vertex:POSITION;UNITY_VERTEX_INPUT_INSTANCE_ID};
+  struct dOut {float4 pos:SV_POSITION;float y:TEXCOORD0;UNITY_VERTEX_OUTPUT_STEREO};
+  float _Opacity;
+  dOut depthVert(dIn v){dOut o;UNITY_SETUP_INSTANCE_ID(v);UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);o.pos=UnityObjectToClipPos(v.vertex);o.y=mul(unity_ObjectToWorld,v.vertex).y;return o;}
+  fixed4 depthFrag(dOut i):SV_Target {clip(_Opacity-.99);clip(35-abs(i.y));return 0;}
+  ENDCG
+ }
  Pass {
  CGPROGRAM
  #pragma vertex vert
@@ -35,4 +51,5 @@ Shader "Astra/Infinite Pole"
  }
  }
 }
+
 

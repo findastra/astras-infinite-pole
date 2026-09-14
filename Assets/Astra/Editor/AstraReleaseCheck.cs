@@ -59,9 +59,9 @@ public static class AstraReleaseCheck
             if(EditorUserBuildSettings.activeBuildTarget!=BuildTarget.StandaloneWindows64)throw new Exception("Expected Windows 64-bit build target");
             var world=await VRCApi.GetWorld(WorldId,true);
             if(world.AuthorId!=APIUser.CurrentUser.id)throw new Exception("SDK account is not the world owner");
-            world.Description="Living Magic v0.3.0 | Swirling reactive glitter, sparkling sunset clouds, body trails, crystalline translucent pole and shuffled playlist. Menus: hold both grips close, pull hands apart; desktop M. PC VR / desktop. Source: https://github.com/findastra/astras-infinite-pole/tree/v0.3.0-living-magic (repository access required).";
+            world.Description="Fine Magic v0.4.0 | Swirling reactive glitter, sparkling sunset clouds, body trails, crystalline translucent pole and shuffled playlist. 96m diameter. Menus: hands together, pause, pull apart; repeat to close or desktop M. PC VR / desktop. Source: https://github.com/findastra/astras-infinite-pole/tree/v0.4.0-fine-magic (repository access required).";
             File.WriteAllText("Review/reupload-status.txt","Building Windows update for existing world. Preserving release status: "+world.ReleaseStatus);
-            await builder.BuildAndUpload(world,Path.GetFullPath("docs/images/living-magic.png"),System.Threading.CancellationToken.None);
+            await builder.BuildAndUpload(world,Path.GetFullPath("docs/images/fine-magic.png"),System.Threading.CancellationToken.None);
             var updated=await VRCApi.GetWorld(WorldId,true);
             EditorSceneManager.SaveScene(UnityEngine.SceneManagement.SceneManager.GetActiveScene());
             File.WriteAllText("Review/reupload-status.txt","Uploaded existing world: https://vrchat.com/home/world/"+WorldId+"\nVersion: "+updated.Version+"\nRelease: "+updated.ReleaseStatus+"\nServer processing and client join must still be checked.");
@@ -69,4 +69,5 @@ public static class AstraReleaseCheck
         }catch(Exception e){File.AppendAllText("Review/reupload-status.txt","\nFAILED: "+e.Message);Debug.LogException(e);if(Application.isBatchMode)EditorApplication.Exit(1);}
     }
 }
+
 

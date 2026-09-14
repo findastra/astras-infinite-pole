@@ -16,3 +16,9 @@ Historical scenes have incomplete source history and must be treated as reconstr
 
 Final regression after moving video controls: PASS. Windows SDK world bundle build: PASS (2026-09-12). Live upload/join is still pending.
 
+
+## Fine Magic checks — 2026-09-14
+
+Scene and shader validation passed: 96m diameter, floor edge raycasts at ±46m, no floor at 49m, all 48 boundary directions, preserved world ID, particle budget 11,980. A render confirms the central pole is clear and the video is off to the right. Fixed mismatched orbital curve modes that had generated repeated Unity particle warnings. Physical hand gestures, fine-glitter clarity and performance require headset verification.
+
+Fine Magic ClientSim regression: PASS, including player-following glitter/cloud positions and actual menu summon/dismiss events. Windows SDK bundle: PASS on 2026-09-14. Live upload and headset checks remain pending.
