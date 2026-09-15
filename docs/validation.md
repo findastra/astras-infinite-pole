@@ -22,3 +22,11 @@ Final regression after moving video controls: PASS. Windows SDK world bundle bui
 Scene and shader validation passed: 96m diameter, floor edge raycasts at ±46m, no floor at 49m, all 48 boundary directions, preserved world ID, particle budget 11,980. A render confirms the central pole is clear and the video is off to the right. Fixed mismatched orbital curve modes that had generated repeated Unity particle warnings. Physical hand gestures, fine-glitter clarity and performance require headset verification.
 
 Fine Magic ClientSim regression: PASS, including player-following glitter/cloud positions and actual menu summon/dismiss events. Windows SDK bundle: PASS on 2026-09-14. Live upload and headset checks remain pending.
+
+## Pinkscape checks — 2026-09-15
+
+Scene/Udon/shader validation passed. Pole has zero colliders. Reference camera has HDR and initialized Post Processing v2 bloom. Enclosure renderers disabled; 11,840 total particle cap. Actual ClientSim events passed for hover gravity release/restoration, petal clear/restart, Pinkscape selection, bloom toggles, plus existing menus, glitter, clouds, trails and music regression.
+
+Bloom-on/off render comparison changes 31.8% of pixels, increasing mean RGB from 9.80 to 10.03. This verifies postprocessing runs; it does not establish perceived sparkle quality in a headset. In-world perimeter appearance, hover motion/comfort, menu targeting and PC VR frame time still need live testing. Windows build pending.
+
+Pinkscape Windows SDK bundle build passed on 2026-09-15. Live upload remains pending.

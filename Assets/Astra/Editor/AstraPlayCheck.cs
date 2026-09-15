@@ -82,6 +82,19 @@ public static class AstraPlayCheck
                 Require(UnityEngine.Object.FindObjectOfType<UdonSharp.Video.USharpVideoPlayer>().shufflePlaylist,"Shuffle not enabled");
                 File.WriteAllText("Review/magic-play-check.txt","PASS: actual Udon player wake updates; body trails on/off and clear; cloud on/off and palette; translucent/solid pole; random pattern; initially hidden menu, summon and dismiss; playlist shuffle configuration.\nPhysical hand gesture, headset targeting, framerate, and live online shuffled playback remain unverified.");
             }
+            var pink=UnityEngine.Object.FindObjectOfType<AstraPinkscape>();
+            if(pink!=null){
+                var pu=UdonSharpEditorUtility.GetBackingUdonBehaviour(pink);
+                var lp=VRC.SDKBase.Networking.LocalPlayer;float gravity=lp.GetGravityStrength();
+                pu.SendCustomEvent("ToggleHover");Require(lp.GetGravityStrength()==0,"Hover did not release gravity");
+                pu.SendCustomEvent("ToggleHover");Require(Mathf.Abs(lp.GetGravityStrength()-gravity)<.001f,"Hover did not restore gravity");
+                pu.SendCustomEvent("TogglePetals");Require(!pink.petals.isPlaying&&pink.petals.particleCount==0,"Petals did not clear");
+                pu.SendCustomEvent("Pinkscape");Require(pink.petals.isPlaying&&RenderSettings.skybox==pink.pinkSky,"Pinkscape preset failed");
+                pu.SendCustomEvent("ToggleBloom");Require(!pink.bloomVolume.activeSelf,"Bloom off failed");
+                pu.SendCustomEvent("ToggleBloom");Require(pink.bloomVolume.activeSelf,"Bloom on failed");
+                Require(GameObject.Find("Infinite Pole - 45mm diameter").GetComponentsInChildren<Collider>(true).Length==0,"Pole collider remains");
+                File.WriteAllText("Review/pinkscape-play-check.txt","PASS: actual Udon hover gravity release/restoration, petals clear and preset restart, Pinkscape sky selection, bloom off/on, pole collider removal. Headset motion comfort and performance require live testing.");
+            }
             c.volumeSlider.SetValueWithoutNotify(1);udon.SendCustomEvent("SetVolume");
             Require(Mathf.Abs(c.music.volume-0.3f)<0.001f,"Volume event failed");
             udon.SendCustomEvent("ToggleMusic");Require(c.music.isPlaying,"Music on failed");
@@ -121,5 +134,6 @@ public static class AstraPlayCheck
         Debug.Log("ASTRA_GLITTER_PLAY_OK");
     }
 }
+
 
 

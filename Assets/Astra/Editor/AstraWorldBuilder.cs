@@ -207,7 +207,7 @@ public static class AstraWorldBuilder
         var scene=UnityEngine.SceneManagement.SceneManager.GetActiveScene();
         foreach(var root in scene.GetRootGameObjects())foreach(var tr in root.GetComponentsInChildren<Transform>(true))if(GameObjectUtility.GetMonoBehavioursWithMissingScriptCount(tr.gameObject)>0)throw new Exception("Missing script: "+tr.name);
         Directory.CreateDirectory("Review");
-        File.WriteAllText("Review/validation.txt","Astra's Infinite Pole\nPlatform raycasts: PASS\n48 boundary directions: PASS\nDescriptor and control references: PASS\nMusic starts off: PASS\nMissing scripts: NONE\nActive particle system hard cap: "+particleCap+"\nNo mirrors, realtime shadows, post processing, or networked state\nVR headset performance and VRChat upload: NOT YET TESTED\n");
+        File.WriteAllText("Review/validation.txt","Astra's Infinite Pole\nPlatform raycasts: PASS\n48 boundary directions: PASS\nDescriptor and control references: PASS\nMusic starts off: PASS\nMissing scripts: NONE\nActive particle system hard cap: "+particleCap+"\nNo mirrors or realtime shadows; optional PC bloom; synchronized playlist\nVR headset performance and VRChat upload: NOT YET TESTED\n");
         Debug.Log("ASTRA_VALIDATION_OK");
     }
     [MenuItem("Astra/Render Preview")]
@@ -232,4 +232,5 @@ public static class AstraWorldBuilder
         Debug.Log("ASTRA_READY_FOR_REVIEW");
     }
 }
+
 

@@ -21,3 +21,13 @@ Source and all historical tags were pushed to GitHub on 2026-09-14. Fine Magic s
 
 Fine Magic: Unity/Udon checks and Windows bundle build passed on 2026-09-14. Local source tag: v0.4.0-fine-magic. Remote source publication succeeded. VRChat upload remains pending the SDK ownership confirmation.
 
+
+## Fine Magic publication correction — 2026-09-15
+
+The prior pending status is superseded: SDK upload completed on 2026-09-14 at 13:10 local, public VRChat version 7, source tag v0.4.0-fine-magic (0eb35a0). Desktop client joined successfully. Headset testing remains outstanding.
+
+## Pinkscape — v0.5.0-pinkscape (candidate)
+
+2026-09-15. Collision-free pole, optional gentle hover, bloom, drifting cherry blossom petals, pink sky/palette preset and hidden enclosure renderers. Unity 2022.3.22f1, Worlds SDK 3.10.5, Windows PC VR/desktop. Exact source is identified by the immutable release tag; published world description will link to that tag. Simulator and scene checks passed. Build and upload pending; no new live version claimed. Destination: https://vrchat.com/home/world/wrld_0d424078-5852-497d-adc6-c97436052355 . Rollback: v0.4.0-fine-magic.
+
+Pinkscape Windows build passed on 2026-09-15; source tag v0.5.0-pinkscape is the release candidate. Upload and live verification pending.

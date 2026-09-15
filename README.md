@@ -37,8 +37,14 @@ No general source license is granted yet. Third-party assets retain their own li
 Historical progress: [recovered milestones](docs/history/README.md). The repository is private; version links require collaborator access.
 
 
-## Fine Magic — v0.4.0 candidate
+## Fine Magic — v0.4.0
 
-The invisible floor is 96 metres across (four times the original diameter). Fine glitter and sparkling clouds follow the local player to maintain density across the larger area within the existing 11,980-particle maximum. The screen sits to the right of the central pole; solid pole depth prevents transparent surfaces behind it from drawing over it. Glitter uses tiny bright cores, narrow rays, staggered glints, color evolution and randomized orbital currents. Source is published at tag v0.4.0-fine-magic. VRChat upload is awaiting the SDK copyright-ownership confirmation in Unity.
+The invisible floor is 96 metres across (four times the original diameter). Fine glitter and sparkling clouds follow the local player to maintain density across the larger area within the existing 11,980-particle maximum. The screen sits to the right of the central pole; solid pole depth prevents transparent surfaces behind it from drawing over it. Glitter uses tiny bright cores, narrow rays, staggered glints, color evolution and randomized orbital currents. Source is published at tag v0.4.0-fine-magic. Uploaded publicly on 2026-09-14 as VRChat world version 7.
 
 
+
+## Pinkscape — v0.5.0 candidate
+
+The pole has no collider. Open the hand menu (desktop M) for HOVER, PETALS, PINKSCAPE and BLOOM. Hover gently rises and falls over 24 seconds through a 0.6m range, remains optional, and restores gravity when disabled or respawned. Cherry blossom petals drift around the local player. Pinkscape selects rose clouds, a pink sky and a pastel glitter gradient. HDR bloom is enabled by default and can be disabled independently. Enclosure meshes are hidden. Particle capacity is 11,840 including petals, clouds and trails.
+
+![Pinkscape development render](docs/images/pinkscape.png)
