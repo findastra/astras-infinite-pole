@@ -1,5 +1,6 @@
 using UdonSharp;
 using UnityEngine;
+using VRC.SDKBase;
 // DJ deck motion (Claude, board task C1). Cosmetic and local only: no networking, no physics, no allocations per frame.
 // - Spins each assigned platter around its own local up axis, starting from its authored pose.
 // - Optionally pulses assigned lights' intensity and a color property on assigned renderers (via one reused property block).
@@ -34,7 +35,7 @@ public class AstraDeckMotion : UdonSharpBehaviour {
 
  private void Update(){
   if(!ready)return;
-  float t=Time.time;
+  float t=(float)(Networking.GetServerTimeInSeconds()%3600.0); // same spin and pulse for everyone
   for(int i=0;i<basePose.Length;i++){
    Transform p=platters[i];
    if(p==null||!p.gameObject.activeInHierarchy)continue;

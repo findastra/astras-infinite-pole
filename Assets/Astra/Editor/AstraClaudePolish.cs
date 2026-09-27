@@ -1244,6 +1244,99 @@ public static class AstraClaudePolish
         return m;
     }
 
+    // ================================================================== 18. round 3
+    // Round cloud puffs back (17 undone, the stairs stay clear), a solid bath you can't see through, the banner booth on the phone
+    // line so all booths hear each other, and every menu effect shared with the whole instance (the scripts themselves were rewritten).
+    const string BackupRound3 = "Review/Backups/BeforeRound3.unity.txt";
+    [MenuItem("Astra/Claude/18 Round 3 (round clouds back, solid bath, all booths linked, shared effects)")]
+    public static void Round3()
+    {
+        int restored = 0;
+        if (Directory.Exists(MeshBackup))
+            foreach (var bk in Directory.GetFiles(MeshBackup, "*.asset"))
+            {
+                var target = AssetDatabase.FindAssets(Path.GetFileNameWithoutExtension(bk) + " t:Mesh", new[] { "Assets/Astra" }).Select(AssetDatabase.GUIDToAssetPath).FirstOrDefault(pth => Path.GetFileName(pth) == Path.GetFileName(bk));
+                if (target == null) continue; File.Copy(bk, target, true); AssetDatabase.ImportAsset(target, ImportAssetOptions.ForceUpdate); restored++;
+            }
+        Begin(BackupRound3);
+        report.Add("round cloud puff meshes put back: " + restored);
+        var plat = UnityEngine.Object.FindObjectsOfType<MeshCollider>(true).FirstOrDefault(c => c.name.StartsWith("Invisible platform"));
+        FloorY = plat != null ? plat.bounds.max.y : 0f; SeaY = FloorY - 1.4f;
+        var fly = MatFor("Pink Butterfly", "Astra/Butterfly");
+        Step("rebuild the pink cloud sea (round puffs)", BuildSea);
+        Step("rebuild the banner booth cloud (round puffs)", () => HeroBooth(fly));
+        Step("rebuild the phone booth clouds (round puffs)", BoothClouds);
+        Step("butterflies", () => Butterflies(fly));
+        Step("keep the stairs clear", ClearStairs);
+        Step("solid bath", SolidBath);
+        Step("every phone booth on the line", PhoneBooths);
+        Step("shared effects", SharedEffects);
+        End("claude-round3-report.txt");
+    }
+
+    static void SolidBath()
+    {
+        var dish = lounge.GetComponentsInChildren<Transform>(true).First(t => t.name == "Bath dish");
+        var water = dish.Find("Bath water"); var wf = water.GetComponent<MeshFilter>();
+        const float depth = 4.2f; float wy = depth - .3f;
+        Func<float, float> F = y => .84f + .2f * Mathf.Sqrt(Mathf.Clamp01((y - .45f) / (depth - .55f)));
+        var wb = wf.sharedMesh.bounds; float rx = wb.extents.x / (F(wy) * .99f), rz = wb.extents.z / (F(wy) * .99f);
+        // an opaque cloud shell along the middle of the wall puffs and under the floor: every gap between puffs now shows cloud, never through
+        var old = dish.Find("Bath shell"); if (old != null) UnityEngine.Object.DestroyImmediate(old.gameObject);
+        const int A = 96, Rn = 14; float y0 = .2f, y1 = depth + .25f; var v = new List<Vector3>(); var tri = new List<int>();
+        for (int side = 0; side < 2; side++)
+        {
+            int b0 = v.Count;
+            for (int j = 0; j <= Rn; j++) { float y = Mathf.Lerp(y0, y1, j / (float)Rn), f = F(y); for (int i = 0; i <= A; i++) { float a = i * Mathf.PI * 2 / A; v.Add(new Vector3(Mathf.Cos(a) * rx * f, y, Mathf.Sin(a) * rz * f)); } }
+            for (int j = 0; j < Rn; j++) for (int i = 0; i < A; i++) { int a = b0 + j * (A + 1) + i, b = a + 1, c = a + A + 1, d = c + 1; if (side == 0) tri.AddRange(new[] { a, c, b, b, c, d }); else tri.AddRange(new[] { a, b, c, b, d, c }); }
+            int centre = v.Count; v.Add(new Vector3(0, y0, 0)); float f0 = F(y0);
+            for (int i = 0; i <= A; i++) { float a = i * Mathf.PI * 2 / A; v.Add(new Vector3(Mathf.Cos(a) * rx * f0, y0, Mathf.Sin(a) * rz * f0)); }
+            for (int i = 0; i < A; i++) { if (side == 0) tri.AddRange(new[] { centre, centre + 1 + i, centre + 2 + i }); else tri.AddRange(new[] { centre, centre + 2 + i, centre + 1 + i }); }
+        }
+        var m = new Mesh { name = "Bath shell" }; m.SetVertices(v); m.SetTriangles(tri, 0); m.RecalculateNormals(); m.RecalculateBounds();
+        var shell = new GameObject("Bath shell"); shell.transform.SetParent(dish, false);
+        shell.AddComponent<MeshFilter>().sharedMesh = SaveMesh(m, "Bath shell"); var sr = shell.AddComponent<MeshRenderer>(); sr.sharedMaterial = white; Quiet(sr);
+        // opaque sparkly water (the old see-through crystal water let you look straight through the bath)
+        var solid = GlitterMat("Bath Water Solid", new Color(.66f, .86f, 1.12f), new Color(.46f, .64f, 1f), new Color(.95f, 1.15f, 1.45f), 1.4f);
+        solid.SetFloat("_Pastel", .12f); EditorUtility.SetDirty(solid);
+        water.GetComponent<MeshRenderer>().sharedMaterial = solid;
+        report.Add("bath: solid water (sparkly, not see-through) and a cloud shell behind every wall gap and under the floor");
+    }
+
+    static void PhoneBooths()
+    {
+        var line = UnityEngine.Object.FindObjectOfType<AstraPhoneLine>(); if (line == null) throw new Exception("Phone line not found");
+        var hero = GameObject.Find("16 - Banner phone booth (Claude)"); var booth = hero != null ? hero.transform.Find("Banner booth") : null;
+        if (booth != null)
+        {
+            var old = booth.Find("Phone booth voice zone"); if (old != null) UnityEngine.Object.DestroyImmediate(old.gameObject);
+            int next = UnityEngine.Object.FindObjectsOfType<AstraPhoneBooth>(true).Select(b => b.booth).DefaultIfEmpty(-1).Max() + 1;
+            var zone = new GameObject("Phone booth voice zone"); zone.transform.SetParent(booth, false); zone.transform.localPosition = new Vector3(0, 1.15f, 0);
+            var trig = zone.AddComponent<BoxCollider>(); trig.isTrigger = true; trig.size = new Vector3(1.2f, 2.3f, 1.2f);
+            var pb = zone.AddUdonSharpComponent<AstraPhoneBooth>(); pb.line = line; pb.booth = next; UdonSharpEditorUtility.CopyProxyToUdon(pb);
+        }
+        line.linkedNear = 250f; line.linkedFar = 300f; UdonSharpEditorUtility.CopyProxyToUdon(line);
+        var all = UnityEngine.Object.FindObjectsOfType<AstraPhoneBooth>(true);
+        report.Add("phone line: " + all.Length + " booths (" + string.Join(", ", all.Select(b => b.transform.parent.name + " #" + b.booth)) + "); anyone in a booth hears everyone in every other booth, up to 250 m away at full volume");
+    }
+
+    static void SharedEffects()
+    {
+        var pink = UnityEngine.Object.FindObjectOfType<AstraPinkscape>(); var atm = UnityEngine.Object.FindObjectOfType<AstraAtmosphere>();
+        if (pink != null && atm != null) { pink.atmosphere = atm; UdonSharpEditorUtility.CopyProxyToUdon(pink); }
+        // the rewritten scripts are Manual sync; make sure every behaviour in the scene carries that setting
+        int set = 0, total = 0; var kinds = new List<string>();
+        foreach (var b in UnityEngine.Object.FindObjectsOfType<UdonSharpBehaviour>(true))
+        {
+            if (!(b is AstraObjectSwitch || b is AstraWorldItems || b is AstraAtmosphere || b is AstraPinkscape || b is AstraGlitterControls || b is AstraMagic || b is AstraControls)) continue;
+            total++; var ub = UdonSharpEditorUtility.GetBackingUdonBehaviour(b); if (ub == null) continue;
+            var prop = ub.GetType().GetProperty("SyncMethod");
+            if (prop != null && prop.CanWrite) { var manual = Enum.Parse(prop.PropertyType, "Manual"); if (!Equals(prop.GetValue(ub), manual)) { prop.SetValue(ub, manual); EditorUtility.SetDirty(ub); set++; } }
+            if (!kinds.Contains(b.GetType().Name)) kinds.Add(b.GetType().Name);
+        }
+        report.Add("shared effects: " + total + " menu behaviours now sync to everyone (" + string.Join(", ", kinds) + "); " + set + " switched to manual sync here. HOVER, music and music volume stay personal.");
+    }
+
     static void RestoreFrom(string backup, string what)
     {
         if (!File.Exists(backup) || !EditorUtility.DisplayDialog("Restore", "Put the scene back to before the " + what + "?", "Restore", "Cancel")) return;

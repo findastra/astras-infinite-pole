@@ -2,7 +2,7 @@ using UdonSharp;
 using UnityEngine;
 using VRC.SDKBase;
 // Crystal chandelier strands sway like avatar hair: each strand is a 3-link chain, lower links lag and swing wider,
-// with slow wind gusts. Local visual only; pauses when nobody local is near (Claude, 2026-09-26).
+// with slow wind gusts. Runs on server time so everyone sees the same sway; pauses when you are far away (Claude, 2026-09-26).
 [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
 public class AstraVineSway : UdonSharpBehaviour
 {
@@ -16,7 +16,7 @@ public class AstraVineSway : UdonSharpBehaviour
     {
         if (Utilities.IsValid(player) && Vector3.Distance(player.GetPosition(), transform.position) > activeRange) return;
         frame++; if ((frame & 1) == 1) return;
-        float t = Time.time;
+        float t = (float)(Networking.GetServerTimeInSeconds() % 3600.0);   // same sway for everyone
         float gust = 1f + .45f * Mathf.Sin(t * .21f) + .25f * Mathf.Sin(t * .57f + 1.3f);
         for (int i = 0; i < segs.Length; i++)
         {

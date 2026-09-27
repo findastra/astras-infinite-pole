@@ -52,10 +52,10 @@ public static class AstraClaudeGit
         run("config user.name \"Astra\"");
         run("config user.email \"findastra@users.noreply.github.com\"");
         run("add -A");
-        run("commit -m \"Pink cloud sea: banner backdrop and butterflies, cloud lounge polish, heart and star clouds, swings, breakfast cloud\"");
-        run("tag -a v0.8.0-cloud-sea -m \"Pink cloud sea (includes the v0.7.0 cloud lounge work)\"");
+        run("commit -m \"Pink cloud sea fixes: stairs clear, round clouds kept, solid bath, all three phone booths linked, menu effects shared with everyone\"");
+        run("tag -a v0.8.1-cloud-sea -m \"Pink cloud sea fixes\"");
         run("push -u origin HEAD:refs/heads/release/v0.8.0-cloud-sea");
-        run("push origin v0.8.0-cloud-sea");
+        run("push origin v0.8.1-cloud-sea");
         run("log --oneline -3");
         var s = sb.ToString(); EditorUtility.DisplayDialog("Git push", s.Length > 2500 ? s.Substring(s.Length - 2500) : s, "OK");
     }

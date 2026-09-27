@@ -40,12 +40,11 @@ Shader "Astra/Glitter Cloud" {
   float3 tint=lerp(float3(1,1,1),rainbow,_Pastel);
   // soft, rounded shading: bright tops, gently shaded sides and underside
   float up=saturate(n.y*.55+.5);
-  float tone=smoothstep(.28,.62,up);   // 2026-09-26 (Claude): soft two-tone cartoon shading, lavender undersides
-  float3 col=tint*lerp(_Bottom.rgb,_Top.rgb,tone)*(.9+.1*tone);
-  float rim=pow(1-saturate(dot(n,eye)),3.0);
+  float3 col=tint*lerp(_Bottom.rgb,_Top.rgb,up)*(.86+.14*up);
+  float rim=pow(1-saturate(dot(n,eye)),2.2);
   float3 p=i.world;
   float g=Glints(p*90,1.7,.5)+Glints(p*34+11.3,1.1,.35)*1.4;
-  return half4(col+_Rim.rgb*tint*rim*.32+float3(1,.95,1)*g*_Glitter*2,1);
+  return half4(col+_Rim.rgb*tint*rim*.45+float3(1,.95,1)*g*_Glitter*2,1);
  }
  ENDCG }
  }
