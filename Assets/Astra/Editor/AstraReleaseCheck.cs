@@ -1,3 +1,5 @@
+using VRC.Editor;
+using VRC.SDKBase.Editor;
 using System;
 using System.IO;
 using System.Linq;
@@ -34,8 +36,11 @@ public static class AstraReleaseCheck
         }catch(Exception e){File.WriteAllText("Review/server-status.txt","Inspection failed: "+e.Message);if(Application.isBatchMode)EditorApplication.Exit(1);}
     }
     static double deadline;
-    static bool buildOnly;
-    public static void BuildOnly(){buildOnly=true;UpdateWorld();}
+    static bool buildOnly; static bool localTest;
+    public static void DesktopTest(){localTest=true;buildOnly=true;VRCSettings.ForceNoVR=true;VRCSettings.NumClients=1;UpdateWorld();}
+    public static void BuildOnly(){localTest=false;buildOnly=true;UpdateWorld();}
+    // For AstraAgentQueue: the flags above are static, so reset them when uploading from an editor that already ran a test/build.
+    public static void UploadNow(){localTest=false;buildOnly=false;UpdateWorld();}
     public static void UpdateWorld(){
         EditorSceneManager.OpenScene("Assets/Astra/Scenes/AstrasInfinitePole.unity");
         EditorApplication.ExecuteMenuItem("VRChat SDK/Show Control Panel");
@@ -48,7 +53,7 @@ public static class AstraReleaseCheck
         EditorApplication.update-=WaitForSdk;if(buildOnly)BuildBundle(b);else Upload(b);
     }
     static async void BuildBundle(IVRCSdkWorldBuilderApi b){
-        try{var path=await b.Build();File.WriteAllText("Review/windows-build-status.txt","Windows world bundle built successfully: "+path+"\nOnline join remains unverified.");if(Application.isBatchMode)EditorApplication.Exit(0);}
+        try{if(localTest){await b.BuildAndTest();File.WriteAllText("Review/desktop-test-status.txt","SDK launched the local spiral world in desktop mode. Client loading still needs visual verification.");if(Application.isBatchMode)EditorApplication.Exit(0);return;}var path=await b.Build();File.WriteAllText("Review/windows-build-status.txt","Windows world bundle built successfully: "+path+"\nOnline join remains unverified.");if(Application.isBatchMode)EditorApplication.Exit(0);}
         catch(Exception e){File.WriteAllText("Review/windows-build-status.txt","FAILED: "+e.Message);Debug.LogException(e);if(Application.isBatchMode)EditorApplication.Exit(1);}
     }
     static async void Upload(IVRCSdkWorldBuilderApi builder){
@@ -59,9 +64,9 @@ public static class AstraReleaseCheck
             if(EditorUserBuildSettings.activeBuildTarget!=BuildTarget.StandaloneWindows64)throw new Exception("Expected Windows 64-bit build target");
             var world=await VRCApi.GetWorld(WorldId,true);
             if(world.AuthorId!=APIUser.CurrentUser.id)throw new Exception("SDK account is not the world owner");
-            world.Description="Pinkscape v0.5.0 | Collision-free pole, optional gentle hover, HDR glitter bloom, cherry blossom petals and a pink sky preset. Reactive swirls, clouds, body trails and shuffled playlist. 96m diameter. Menus: hands together, pause, pull apart; repeat to close or desktop M. PC VR / desktop. Source: https://github.com/findastra/astras-infinite-pole/tree/v0.5.0-pinkscape (repository access required).";
+            world.Description="Infinite Spiral v0.6.0 | Walkable floating pink/rainbow glitter staircase extending upward, varied clouds above and below the floor, sharper pole rendering. Collision-free pole, optional hover, petals, personal effects and shuffled playlist. Respawn returns to floor. Menus: hands together, pause, pull apart; repeat to close or desktop M. PC VR / desktop. Source: https://github.com/findastra/astras-infinite-pole/tree/v0.6.0-infinite-spiral (repository access required).";
             File.WriteAllText("Review/reupload-status.txt","Building Windows update for existing world. Preserving release status: "+world.ReleaseStatus);
-            await builder.BuildAndUpload(world,Path.GetFullPath("docs/images/pinkscape.png"),System.Threading.CancellationToken.None);
+            await builder.BuildAndUpload(world,Path.GetFullPath("docs/images/spiral.png"),System.Threading.CancellationToken.None);
             var updated=await VRCApi.GetWorld(WorldId,true);
             EditorSceneManager.SaveScene(UnityEngine.SceneManagement.SceneManager.GetActiveScene());
             File.WriteAllText("Review/reupload-status.txt","Uploaded existing world: https://vrchat.com/home/world/"+WorldId+"\nVersion: "+updated.Version+"\nRelease: "+updated.ReleaseStatus+"\nServer processing and client join must still be checked.");
@@ -69,6 +74,9 @@ public static class AstraReleaseCheck
         }catch(Exception e){File.AppendAllText("Review/reupload-status.txt","\nFAILED: "+e.Message);Debug.LogException(e);if(Application.isBatchMode)EditorApplication.Exit(1);}
     }
 }
+
+
+
 
 
 

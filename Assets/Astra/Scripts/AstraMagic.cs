@@ -44,7 +44,7 @@ public class AstraMagic : UdonSharpBehaviour
         Vector3 torso=Vector3.Lerp(feet,head,.52f);
         // Local simulation keeps a bounded, dense atmosphere throughout the large map.
         if(glitterVolume!=null)glitterVolume.position=feet;
-        if(cloudVolume!=null)cloudVolume.position=feet+Vector3.up*3.5f;
+        if(cloudVolume!=null)cloudVolume.position=feet+Vector3.down*2f;
         if(Vector3.Distance(feet,lastPosition)>3f) for(int i=0;i<trails.Length;i++)trails[i].Clear();
         lastPosition=feet;
         trails[0].transform.position=left;trails[1].transform.position=right;trails[2].transform.position=torso;
@@ -60,6 +60,7 @@ public class AstraMagic : UdonSharpBehaviour
         }
     }
 }
+
 
 
 

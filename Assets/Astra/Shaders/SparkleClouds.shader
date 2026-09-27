@@ -13,11 +13,19 @@ v2f vert(appdata v){v2f o;UNITY_SETUP_INSTANCE_ID(v);UNITY_INITIALIZE_VERTEX_OUT
 float hash(float2 p){return frac(sin(dot(p,float2(127.1,311.7)))*43758.5453);}
 float noise(float2 p){float2 i=floor(p),f=frac(p);f=f*f*(3-2*f);return lerp(lerp(hash(i),hash(i+float2(1,0)),f.x),lerp(hash(i+float2(0,1)),hash(i+1),f.x),f.y);}
 float4 frag(v2f i):SV_Target {UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(i);
-float2 p=i.uv*2-1;float n=noise(p*3+_Time.y*.018);n+=noise(p*7-_Time.y*.027)*.35;
-float soft=pow(saturate(1-dot(p,p)),2)*smoothstep(.12,.85,n);
-float2 cells=i.uv*22;float2 local=frac(cells)-.5;float h=hash(floor(cells));
-float glint=pow(saturate(1-length(local)*7),5)*step(.91,h)*pow(.5+.5*sin(_Time.y*1.5+h*70),8);
-float3 color=lerp(_ColorA.rgb,_ColorB.rgb,.5+.5*sin(i.world.y*.3+i.world.x*.15+_Time.y*.04));
-float fade=smoothstep(.7,2.5,distance(i.world,_WorldSpaceCameraPos));
-return float4(color*(.65+glint*8),soft*i.color.a*fade); }
+float seed=i.color.r*81.7+i.color.g*37.3;
+float2 p=i.uv*2-1;
+float2 q=p*lerp(2.2,4.7,frac(seed))+float2(seed,seed*1.37);
+float t=_Time.y*lerp(.006,.025,frac(seed*7.3));
+float n=noise(q+float2(t,-t*.7));
+n+=noise(q*2.13+float2(-t*.8,t)*1.7)*.4;
+n+=noise(q*4.17+seed)*.14;
+float radial=pow(saturate(1-dot(p,p)),lerp(1.2,2.8,frac(seed*3.1)));
+float soft=radial*smoothstep(.25,.92,n);
+float2 cells=i.uv*28+seed;float2 local=frac(cells)-.5;float h=hash(floor(cells));
+float glint=pow(saturate(1-length(local)*7),5)*step(.975,h)*pow(.5+.5*sin(_Time.y*1.2+h*70),12);
+float3 color=lerp(_ColorA.rgb,_ColorB.rgb,.5+.5*sin(seed+i.world.y*.13+_Time.y*.015));
+float fade=smoothstep(1.2,3.8,distance(i.world,_WorldSpaceCameraPos));
+return float4(lerp(color,float3(1,.88,.95),.4)*(.95+glint*5),soft*i.color.a*fade); }
 ENDCG } } }
+

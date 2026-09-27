@@ -11,7 +11,9 @@ public class AstraAtmosphere : UdonSharpBehaviour
     public Slider exposure;
     private int selectedSky;
     private bool evolving = true;
-    private void Start() { SelectSky(0); ApplyMotion(); }
+    [Tooltip("Sky shown when the world loads (Claude 2026-09-26: the pink cloud sea from Astra's banner). Empty = Velvet Nebula.")]
+    public Material startSky;
+    private void Start() { SelectSky(0); ApplyMotion(); if (startSky != null) { RenderSettings.skybox = startSky; skyLabel.text = "PINK CLOUD SEA"; } }
     public void Nebula() { SelectSky(0); }
     public void Aurora() { SelectSky(1); }
     public void RoseDusk() { SelectSky(2); }

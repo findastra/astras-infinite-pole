@@ -48,3 +48,11 @@ The invisible floor is 96 metres across (four times the original diameter). Fine
 The pole has no collider. Open the hand menu (desktop M) for HOVER, PETALS, PINKSCAPE and BLOOM. Hover gently rises and falls over 24 seconds through a 0.6m range, remains optional, and restores gravity when disabled or respawned. Cherry blossom petals drift around the local player. Pinkscape selects rose clouds, a pink sky and a pastel glitter gradient. HDR bloom is enabled by default and can be disabled independently. Enclosure meshes are hidden. Particle capacity is 11,840 including petals, clouds and trails.
 
 ![Pinkscape development render](docs/images/pinkscape.png)
+
+## Infinite Spiral — v0.6.0 candidate
+
+A floating, sheer pink staircase wraps around the pole with a slowly changing rainbow gradient and glitter. Enter at floor level beside the pole; follow the curve upward. Eleven local sections recycle by whole turns to support continued ascent; the collision surface is a smooth helix to reduce stair-induced head bounce. Use VRChat Respawn to return to the floor. This is infinite upward, with its entrance at the original floor.
+
+Clouds span roughly 9.5 metres below to 5.5 metres above your feet, with independently randomized puff proportions, orientation, drift and noise. The pole remains non-collidable. Rendering changes reduce broad bloom haze and fine-pattern aliasing; headset verification is still needed for the originally reported distortion.
+
+All world updates must finish by launching a desktop VRChat preview and reporting whether it is a local test or the uploaded world.

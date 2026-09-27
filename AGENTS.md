@@ -10,3 +10,5 @@ For every project going forward:
 6. Preserve rollback information. Do not claim an old publication maps to a new commit if its original source was not captured.
 7. Keep caches, credentials, account logs and temporary upload flags out of Git. Respect third-party asset licenses.
 8. Keep repositories private unless the user authorizes public source. Explain that private version links are visible only to collaborators.
+
+9. After each world update, launch VRChat in desktop mode into the updated world or its local SDK test build, and report which version is running.
