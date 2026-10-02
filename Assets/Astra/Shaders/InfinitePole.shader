@@ -14,6 +14,7 @@ Shader "Astra/Infinite Pole"
   #pragma fragment depthFrag
   #pragma multi_compile_instancing
   #include "UnityCG.cginc"
+ #include "AstraStorm.cginc"
   struct dIn {float4 vertex:POSITION;UNITY_VERTEX_INPUT_INSTANCE_ID};
   struct dOut {float4 pos:SV_POSITION;float y:TEXCOORD0;UNITY_VERTEX_OUTPUT_STEREO};
   float _Opacity;
@@ -27,6 +28,7 @@ Shader "Astra/Infinite Pole"
  #pragma fragment frag
  #pragma multi_compile_instancing
  #include "UnityCG.cginc"
+ #include "AstraStorm.cginc"
  struct appdata { float4 vertex:POSITION; float3 normal:NORMAL; UNITY_VERTEX_INPUT_INSTANCE_ID };
  struct v2f { float4 pos:SV_POSITION; float3 normal:TEXCOORD0; float3 world:TEXCOORD1; UNITY_VERTEX_OUTPUT_STEREO };
  fixed4 _Color, _VoidColor; float _Opacity,_Sparkle;
@@ -53,7 +55,7 @@ Shader "Astra/Infinite Pole"
   float3 gem=lerp(float3(1,1,1),.6+.4*cos(float3(0,2,4)+h*6.28+_Time.y*.1),.45);
   chrome+=gem*sparkle*_Sparkle*4;
   float fade=smoothstep(80,120,abs(i.world.y-_WorldSpaceCameraPos.y));
-  return half4(chrome,(1-fade)*_Opacity);
+  return half4(StormDim(chrome),(1-fade)*_Opacity);
  }
  ENDCG
  }

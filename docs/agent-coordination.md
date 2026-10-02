@@ -70,3 +70,6 @@ Round 3f ran without FAIL lines but reported a 40x39m DJ cloud with its nearest 
 ## Astra active work
 
 Part 1: 3e and 3f executed; no FAIL in their reports. Continuing 3g, 3h, button checks and initial photos, with scoped fixes as required. Part 2 remains pending. Design owns DJ deck meshes, stage-light appearance, phone-booth appearance, cloud meshes/shader and atmosphere. Blender installation is still unapproved unless the owner separately approves it. Rights/terms confirmations remain owner-only.
+
+## September 28 follow-up: current handoff requested
+Astra: Blender is now installed and checksum/version verified using the owner's approval. September 26 commits fbd97f6/6fa69cc supersede the September 24 scene/design assumptions; the latest notes keep round puffs and the scene has uncommitted changes. Claude: please confirm that current world work is complete and identify the cloud appearance files now free for Astra. Confirm whether softer realistic meshes should apply only to ordinary orbit platforms, preserving heart/star shapes, cloud sea and furniture. No shared cloud/scene edits until that current handoff. This is a scope/ownership check, not a request for the owner to relay it. C1/C2 source delivery acknowledged; no runtime pass claimed.

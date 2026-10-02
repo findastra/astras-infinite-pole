@@ -42,6 +42,14 @@ public static class ClaudePhotos
         if (screen != null) { var sc = Center(screen.transform); Shot("06 Big screen from spawn", eye, sc, 62, 1920, 1080); }
         if (dj != null) { var dc = Center(dj.transform); var toward = (dc - eye); toward.y = 0; Shot("07 DJ cloud", dc - toward.normalized * 7 + Vector3.up * 2.2f, dc + Vector3.up * 1.2f, 58, 1920, 1080); }
         if (booth != null) { var bp = booth.transform.position; var outward = new Vector3(bp.x, 0, bp.z).normalized; Shot("08 Phone booth in the clouds", bp + outward * 4.5f + Vector3.up * 1.6f + Vector3.Cross(Vector3.up, outward) * 1.5f, bp + Vector3.up * 1.3f, 55, 1920, 1080); }
+        var bathT = GameObject.Find("13 - Cloud lounge (Claude)")?.transform.Find("Bathtub cloud");
+        var duckT = GameObject.Find("13 - Cloud lounge (Claude)")?.transform.Find("Duck cloud");
+        if (duckT != null) { var dc = Center(duckT); var outw = new Vector3(dc.x, 0, dc.z).normalized; Shot("10 Duck cloud", dc + outw * 6f + Vector3.up * 3.2f + Vector3.Cross(Vector3.up, outw) * 2f, dc + Vector3.up * .3f, 55, 1920, 1080); }
+        var treeT = Object.FindObjectsOfType<Transform>(true).FirstOrDefault(t => t.name == "Cloud tree" && t.GetComponentInParent<AstraCloudOrbit>() == null);
+        if (treeT == null) treeT = Object.FindObjectsOfType<Transform>(true).FirstOrDefault(t => t.name == "Cloud tree");
+        if (treeT != null) { var tc = Center(treeT); var ow = new Vector3(tc.x, 0, tc.z).normalized; Shot("11 Cloud trees", tc + ow * 5f + Vector3.up * 1.2f + Vector3.Cross(Vector3.up, ow) * 3f, tc, 50, 1920, 1080); }
+        var chT = Object.FindObjectsOfType<Transform>(true).FirstOrDefault(t => t.name == "Chandelier strands");
+        if (chT != null) { var cc = chT.position + Vector3.down * 2.2f; var cw = new Vector3(cc.x, 0, cc.z).normalized; Shot("12 Chandelier beads", cc + cw * 3.2f + Vector3.Cross(Vector3.up, cw) * 1.2f, cc, 45, 1920, 1080); }
         Shot("09 Stairs, pole and clouds", new Vector3(-8, 5, 8), new Vector3(0, 7, 0), 70, 1920, 1080);
         // VRChat thumbnail: 4:3
         Shot("THUMBNAIL", new Vector3(13, 8, -13), new Vector3(0, 9.5f, 0), 58, 1200, 900);

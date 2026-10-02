@@ -19,6 +19,7 @@ Shader "Astra/Cloud Sea" {
  #pragma fragment frag
  #pragma multi_compile_instancing
  #include "UnityCG.cginc"
+ #include "AstraStorm.cginc"
  float4 _Top,_Mid,_Shadow,_Sun,_Horizon,_SunDir;float _Scale,_Haze,_Speed,_Glitter;
  struct appdata{float4 vertex:POSITION;UNITY_VERTEX_INPUT_INSTANCE_ID};
  struct v2f{float4 pos:SV_POSITION;float3 world:TEXCOORD0;UNITY_VERTEX_OUTPUT_STEREO};
@@ -41,8 +42,19 @@ Shader "Astra/Cloud Sea" {
   c+=_Sun.rgb*pow(saturate(dot(n,normalize(float3(sun.x,.35,sun.z)))),3)*smoothstep(.35,.9,h)*.45;
   c+=_Sun.rgb*pow(saturate(dot(-eye,sun)),6)*.25;                          // back-lit glow looking toward the sun
   c+=float3(1,.96,1)*Glints(i.world*6)*_Glitter;
+  float3 hcol=_Horizon.rgb;
+  if(_UdonStorm>0){
+   float3 rb=StormRainbow(dot(i.world.xz,float2(.004,.003))+h*.4+_Time.y*.01);
+   float3 sc=lerp(float3(.02,.02,.026),float3(.15,.15,.18),smoothstep(.2,.9,h))*lerp(float3(1,1,1),rb*1.6,.45);
+   sc+=float3(.7,.76,1)*_UdonFlash*smoothstep(.3,.9,h)*.7;
+   c=lerp(c,sc,_UdonStorm);hcol=lerp(hcol,STORM_HORIZON+float3(.35,.38,.5)*_UdonFlash,_UdonStorm);
+  }
   float d=distance(_WorldSpaceCameraPos.xz,i.world.xz);
-  c=lerp(c,_Horizon.rgb,saturate(1-exp(-d/_Haze))*.95);
+  // 2026-10-01 (Claude): the sea used to stop dead at the camera's far plane, which drew a shimmering line across the
+  // horizon while moving. Now it melts completely into the horizon colour well before that distance.
+  float farPlane=_ProjectionParams.z;   // ("far" is a reserved word in HLSL)
+  float haze=max(saturate(1-exp(-d/_Haze))*.95,smoothstep(farPlane*.45,farPlane*.85,d));
+  c=lerp(c,hcol,haze);
   return half4(c,1);
  }
  ENDCG}}

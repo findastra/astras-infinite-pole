@@ -6,6 +6,7 @@ Pass { CGPROGRAM
 #pragma fragment frag
 #pragma multi_compile_instancing
 #include "UnityCG.cginc"
+ #include "AstraStorm.cginc"
 struct appdata {float4 vertex:POSITION;float2 uv:TEXCOORD0;float4 color:COLOR;UNITY_VERTEX_INPUT_INSTANCE_ID};
 struct v2f {float4 pos:SV_POSITION;float2 uv:TEXCOORD0;float4 color:COLOR;float3 world:TEXCOORD1;UNITY_VERTEX_OUTPUT_STEREO};
 float4 _ColorA,_ColorB;
@@ -26,6 +27,6 @@ float2 cells=i.uv*28+seed;float2 local=frac(cells)-.5;float h=hash(floor(cells))
 float glint=pow(saturate(1-length(local)*7),5)*step(.975,h)*pow(.5+.5*sin(_Time.y*1.2+h*70),12);
 float3 color=lerp(_ColorA.rgb,_ColorB.rgb,.5+.5*sin(seed+i.world.y*.13+_Time.y*.015));
 float fade=smoothstep(1.2,3.8,distance(i.world,_WorldSpaceCameraPos));
-return float4(lerp(color,float3(1,.88,.95),.4)*(.95+glint*5),soft*i.color.a*fade); }
+return float4(StormDim(lerp(color,float3(1,.88,.95),.4)*(.95+glint*5)),soft*i.color.a*fade); }
 ENDCG } } }
 

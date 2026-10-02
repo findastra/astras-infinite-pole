@@ -1,4 +1,5 @@
 Shader "Astra/Glitter Cloud" {
+ // 2026-10-01 (Claude): Stormscape turns every cloud into a dark rainbow gradient of greys and blacks (AstraStorm.cginc).
  // Claude round 3a/3f: soft, rounded cloud shading with twinkling glitter.
  // Every cloud gets its own pastel tint (close to white) that slowly shifts as it drifts and over time.
  // Instanced, no textures. The DJ deck uses this shader too, with Color variety set to 0.
@@ -16,6 +17,7 @@ Shader "Astra/Glitter Cloud" {
  #pragma fragment frag
  #pragma multi_compile_instancing
  #include "UnityCG.cginc"
+ #include "AstraStorm.cginc"
  struct appdata {float4 vertex:POSITION;float3 normal:NORMAL;UNITY_VERTEX_INPUT_INSTANCE_ID};
  struct v2f {float4 pos:SV_POSITION;float3 world:TEXCOORD0;float3 normal:TEXCOORD1;float3 center:TEXCOORD2;UNITY_VERTEX_OUTPUT_STEREO};
  float4 _Top,_Bottom,_Rim;float _Glitter,_Pastel,_ColorSpeed;
@@ -44,7 +46,10 @@ Shader "Astra/Glitter Cloud" {
   float rim=pow(1-saturate(dot(n,eye)),2.2);
   float3 p=i.world;
   float g=Glints(p*90,1.7,.5)+Glints(p*34+11.3,1.1,.35)*1.4;
-  return half4(col+_Rim.rgb*tint*rim*.45+float3(1,.95,1)*g*_Glitter*2,1);
+  float3 calm=col+_Rim.rgb*tint*rim*.45+float3(1,.95,1)*g*_Glitter*2;
+  if(_UdonStorm<=0)return half4(calm,1);
+  float3 storm=StormCloud(i.world,i.center,up,rim)+float3(.75,.8,1)*g*_Glitter*.18;   // glitter becomes faint wet glints
+  return half4(lerp(calm,storm,_UdonStorm),1);
  }
  ENDCG }
  }

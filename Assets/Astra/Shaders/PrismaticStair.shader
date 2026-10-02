@@ -16,6 +16,7 @@ Shader "Astra/Prismatic Stair" {
  #pragma fragment frag
  #pragma multi_compile_instancing
  #include "UnityCG.cginc"
+ #include "AstraStorm.cginc"
  struct appdata {float4 vertex:POSITION;float3 normal:NORMAL;float2 uv:TEXCOORD0;UNITY_VERTEX_INPUT_INSTANCE_ID};
  struct v2f {float4 pos:SV_POSITION;float3 world:TEXCOORD0;float3 normal:TEXCOORD1;UNITY_VERTEX_OUTPUT_STEREO};
  float4 _Color;float _Hue,_Opacity,_Glitter,_Rainbow,_SparkleGlow;
@@ -44,7 +45,7 @@ Shader "Astra/Prismatic Stair" {
   float3 sparkle=lerp(float3(1,.92,1),.65+.35*cos(float3(0,2.1,4.2)+Hash3(floor(p*55))*6.28),.35);
   float fade=1-smoothstep(55,66,abs(i.world.y-_WorldSpaceCameraPos.y));
   float3 rgb=col*(.75+.6*sheen)+sparkle*g*_Glitter*_SparkleGlow; // HDR: sparkles go well above the 1.1 bloom threshold
-  return half4(rgb,saturate(_Opacity+sheen*.25+g*1.6)*fade);
+  return half4(StormDim(rgb),saturate(_Opacity+sheen*.25+g*1.6)*fade);
  }
  ENDCG }
  }

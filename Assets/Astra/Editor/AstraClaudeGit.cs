@@ -10,6 +10,8 @@ using UnityEditor.SceneManagement;
 public static class AstraClaudeGit
 {
     const string Log = "Review/git-log.txt";
+    const string Result = "Review/git-push-result.txt";
+    const string Tag = "v0.9.0-stormscape";
     static void Append(string s) { Directory.CreateDirectory("Review"); File.AppendAllText(Log, DateTime.Now.ToString("HH:mm:ss ") + s + "\n"); }
 
     [MenuItem("Astra/Claude/6 Install Git (winget, official package)")]
@@ -25,6 +27,23 @@ public static class AstraClaudeGit
         p.Exited += (s, e) => Append("winget finished, exit " + p.ExitCode + ", git now: " + (FindGit() ?? "not found"));
         p.Start(); p.BeginOutputReadLine(); p.BeginErrorReadLine();
         EditorUtility.DisplayDialog("Installing Git", "Git for Windows is installing in the background (official winget package).\nIf Windows asks for permission, click Yes.\nProgress: Review/git-log.txt", "OK");
+    }
+
+    [MenuItem("Astra/Claude/7a What would be pushed (no commit, no push)")]
+    public static void Preview()
+    {
+        var git = FindGit(); if (git == null) { File.WriteAllText("Review/git-preview.txt", "Git isn't installed yet (menu: Astra > Claude > 6 Install Git)."); return; }
+        EditorSceneManager.SaveOpenScenes(); AssetDatabase.SaveAssets();
+        var sb = new StringBuilder();
+        sb.Append("branch/remote\n" + Run(git, "status --short --branch") + "\n\n");
+        var st = Run(git, "status --porcelain");
+        var lines = st.Split('\n').Where(l => l.Trim().Length > 3).ToArray();
+        sb.Append("changed paths: " + lines.Length + "\n");
+        foreach (var l in lines.Take(80)) sb.Append("  " + l.Trim() + "\n");
+        if (lines.Length > 80) sb.Append("  ... and " + (lines.Length - 80) + " more\n");
+        sb.Append("\nremote: " + Run(git, "remote -v") + "\nlast commits:\n" + Run(git, "log --oneline -5"));
+        File.WriteAllText("Review/git-preview.txt", sb.ToString()); Append("preview written to Review/git-preview.txt");
+        UnityEngine.Debug.Log("CLAUDE_GIT_PREVIEW_OK see Review/git-preview.txt");
     }
 
     [MenuItem("Astra/Claude/7 Commit, tag and push")]
@@ -46,18 +65,27 @@ public static class AstraClaudeGit
         var ex = File.Exists(".git/info/exclude") ? File.ReadAllText(".git/info/exclude") : "";
         foreach (var line in new[] { "/Review/", "/ClientSimStorage/", "/docs/dev/" }) if (!ex.Contains(line)) File.AppendAllText(".git/info/exclude", "\n" + line);
         run("status --short --branch");
-        var st = Run(git, "status --porcelain"); if (!st.StartsWith("(exit 0)")) { EditorUtility.DisplayDialog("Git push stopped", st, "OK"); return; }
+        var st = Run(git, "status --porcelain"); if (!st.StartsWith("(exit 0)")) { File.WriteAllText(Result, "STOPPED: git status failed\n" + st); return; }
         var changed = st.Split('\n').Count(l => l.Trim().Length > 3);
-        if (changed > 600) { EditorUtility.DisplayDialog("Git push stopped", changed + " changed paths is more than expected, so nothing was committed. See Review/git-log.txt.", "OK"); return; }
+        if (changed > 600) { File.WriteAllText(Result, "STOPPED: " + changed + " changed paths is more than expected, so nothing was committed.\n" + st); return; }
         run("config user.name \"Astra\"");
         run("config user.email \"findastra@users.noreply.github.com\"");
         run("add -A");
-        run("commit -m \"Pink cloud sea fixes: stairs clear, round clouds kept, solid bath, all three phone booths linked, menu effects shared with everyone\"");
-        run("tag -a v0.8.1-cloud-sea -m \"Pink cloud sea fixes\"");
-        run("push -u origin HEAD:refs/heads/release/v0.8.0-cloud-sea");
-        run("push origin v0.8.1-cloud-sea");
+        File.WriteAllText("Review/commit-msg.txt",
+            "Stormscape, rainbow flow, cloud trees and duck cloud\n\n" +
+            "- Stormscape switch: dark rainbow storm clouds, storm sky, rain, lightning and thunder, faster chandeliers\n" +
+            "- Rainbow flow round the pole (six pattern styles)\n" +
+            "- Palm and cherry blossom trees on the clouds; duck cloud instead of the bath\n" +
+            "- Chandelier crystals strung like beads; cloud sea fades into the horizon (no line)\n" +
+            "- Rounded heart clouds, plain booth glass, hub phone line, walk-through cloud platforms\n\n" +
+            "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n" +
+            "Claude-Session: https://claude.ai/code/session_01RryzTe5YiXokw79j7NrjXC\n");
+        run("commit -F Review/commit-msg.txt");
+        run("tag -a " + Tag + " -m \"Stormscape, rainbow flow, cloud trees, duck cloud, booth and platform fixes\"");
+        run("push -u origin HEAD:refs/heads/release/" + Tag);
+        run("push origin " + Tag);
         run("log --oneline -3");
-        var s = sb.ToString(); EditorUtility.DisplayDialog("Git push", s.Length > 2500 ? s.Substring(s.Length - 2500) : s, "OK");
+        File.WriteAllText(Result, sb.ToString());   // no dialog: the agent queue reads this file
     }
 
     static string Run(string exe, string args)
