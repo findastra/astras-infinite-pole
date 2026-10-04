@@ -11,7 +11,7 @@ public static class AstraClaudeGit
 {
     const string Log = "Review/git-log.txt";
     const string Result = "Review/git-push-result.txt";
-    const string Tag = "v0.9.0-stormscape";
+    const string Tag = "v0.10.0-theatre";
     static void Append(string s) { Directory.CreateDirectory("Review"); File.AppendAllText(Log, DateTime.Now.ToString("HH:mm:ss ") + s + "\n"); }
 
     [MenuItem("Astra/Claude/6 Install Git (winget, official package)")]
@@ -72,16 +72,17 @@ public static class AstraClaudeGit
         run("config user.email \"findastra@users.noreply.github.com\"");
         run("add -A");
         File.WriteAllText("Review/commit-msg.txt",
-            "Stormscape, rainbow flow, cloud trees and duck cloud\n\n" +
-            "- Stormscape switch: dark rainbow storm clouds, storm sky, rain, lightning and thunder, faster chandeliers\n" +
-            "- Rainbow flow round the pole (six pattern styles)\n" +
-            "- Palm and cherry blossom trees on the clouds; duck cloud instead of the bath\n" +
-            "- Chandelier crystals strung like beads; cloud sea fades into the horizon (no line)\n" +
-            "- Rounded heart clouds, plain booth glass, hub phone line, walk-through cloud platforms\n\n" +
+            "Cloud theatre, one tab menu, smooth cloud furniture\n\n" +
+            "- Movie theatre at the big screen: a row of VRChat chairs, private cloud boxes above, seats on a cloud on top of the screen\n" +
+            "- One menu with WORLD / SKY / GLITTER / MAGIC tabs, bigger text, visible sliders, rainbow stair colour slider\n" +
+            "- Video skip back / forward buttons\n" +
+            "- Cloud lounge furniture melted into smooth connected clouds; DJ booth no longer cut by cloud\n" +
+            "- Removed trees, butterflies, breakfast nook, cloud sparkle rain, three skies and the pole sparkle dots\n" +
+            "- Glow orbs all within reach; no more spinning when looking up/down on moving clouds\n\n" +
             "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n" +
             "Claude-Session: https://claude.ai/code/session_01RryzTe5YiXokw79j7NrjXC\n");
         run("commit -F Review/commit-msg.txt");
-        run("tag -a " + Tag + " -m \"Stormscape, rainbow flow, cloud trees, duck cloud, booth and platform fixes\"");
+        run("tag -a " + Tag + " -m \"Cloud theatre, tab menu, smooth cloud furniture\"");
         run("push -u origin HEAD:refs/heads/release/" + Tag);
         run("push origin " + Tag);
         run("log --oneline -3");

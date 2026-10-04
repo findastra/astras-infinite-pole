@@ -5,14 +5,18 @@ using VRC.SDKBase;
 
 // Sky, sky brightness and slow evolution. 2026-09-26 (Claude): shared, so a sky picked by anyone changes it for everyone,
 // and late joiners see the current sky. The world starts on the pink cloud sea from Astra's banner (startSky).
+// 2026-10-03 (Claude): Rose Dusk, Midnight Stars and Belfast Sunset removed at Astra's request. The sky names now live in
+// skyNames (set by the editor pass) instead of a hard-coded list, so the count is never out of step with skies[] again,
+// and the brightness slider asks the material whether it has _Exposure rather than testing one magic index.
 [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
 public class AstraAtmosphere : UdonSharpBehaviour
 {
     public Material[] skies;
+    public string[] skyNames;
     public Material[] glitter;
     public Text skyLabel, motionLabel;
     public Slider exposure;
-    [Tooltip("Sky shown when the world loads (Claude 2026-09-26: the pink cloud sea from Astra's banner). Empty = Velvet Nebula.")]
+    [Tooltip("Sky shown when the world loads (Claude 2026-09-26: the pink cloud sea from Astra's banner). Empty = the first sky.")]
     public Material startSky;
     [UdonSynced] private int sky = -1;            // -1 = start sky (pink cloud sea)
     [UdonSynced] private float exposureValue = -1;
@@ -25,11 +29,8 @@ public class AstraAtmosphere : UdonSharpBehaviour
     }
     public void Nebula() { Pick(0); }
     public void Aurora() { Pick(1); }
-    public void RoseDusk() { Pick(2); }
-    public void Midnight() { Pick(3); }
-    public void QuietVoid() { Pick(4); }
-    public void SunsetSky() { Pick(5); }
-    public void MoonlitSky() { Pick(6); }
+    public void QuietVoid() { Pick(2); }
+    public void MoonlitSky() { Pick(3); }
     public void PinkCloudSea() { Pick(-1); }
     private void Pick(int index) { sky = index; Share(); ShowSky(); ShowExposure(); }
     public void ApplyExposure()
@@ -47,15 +48,20 @@ public class AstraAtmosphere : UdonSharpBehaviour
     }
     private void ShowSky()
     {
-        if (sky < 0 && startSky != null) { RenderSettings.skybox = startSky; skyLabel.text = "PINK CLOUD SEA"; return; }
+        if (sky < 0 && startSky != null) { RenderSettings.skybox = startSky; if (skyLabel != null) skyLabel.text = "PINK CLOUD SEA"; return; }
         int i = Mathf.Clamp(sky, 0, skies.Length - 1);
-        string[] names = { "VELVET NEBULA", "ARCTIC AURORA", "ROSE DUSK", "MIDNIGHT STARS", "QUIET VOID", "BELFAST SUNSET", "MOONLIT SKY" };
-        RenderSettings.skybox = skies[i]; skyLabel.text = names[i];
+        RenderSettings.skybox = skies[i];
+        if (skyLabel != null) skyLabel.text = skyNames != null && i < skyNames.Length ? skyNames[i] : "SKY";
     }
-    private void ShowExposure() { if (sky >= 0 && sky != 4 && sky < skies.Length) skies[sky].SetFloat("_Exposure", Mathf.Lerp(0.15f, 1.4f, exposure.value)); }
+    private void ShowExposure()
+    {
+        if (sky < 0 || sky >= skies.Length) return;
+        Material m = skies[sky];
+        if (m != null && m.HasProperty("_Exposure")) m.SetFloat("_Exposure", Mathf.Lerp(0.15f, 1.4f, exposure.value));
+    }
     private void ShowMotion()
     {
         for (int i = 0; i < glitter.Length; i++) { glitter[i].SetFloat("_DriftSpeed", evolving ? 0.004f : 0); glitter[i].SetFloat("_MorphSpeed", evolving ? 0.007f + i * 0.0004f : 0); }
-        motionLabel.text = evolving ? "SLOW EVOLUTION  /  ON" : "SLOW EVOLUTION  /  OFF";
+        if (motionLabel != null) motionLabel.text = evolving ? "SLOW EVOLUTION  /  ON" : "SLOW EVOLUTION  /  OFF";
     }
 }

@@ -4,6 +4,7 @@ using VRC.SDKBase;
 // Cloud rings orbit the spiral stairs, some clockwise and some counterclockwise. (Claude round 3b)
 // Positions come from server time, so everyone sees the same clouds with no network traffic.
 // Standing on a moving cloud carries you along with it.
+// 2026-10-03 (Claude): carrying a standing player keeps their yaw only (see PostLateUpdate).
 // Keep-clear zones (round 3f): a cloud that drifts into the video screen or DJ area vanishes until it has passed.
 [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
 public class AstraCloudOrbit : UdonSharpBehaviour {
@@ -21,7 +22,7 @@ public class AstraCloudOrbit : UdonSharpBehaviour {
  public Vector3[] clearHalf;    // half size of each zone in meters
  public float zoneBand=30f;     // only rings within this height of a zone are tested
  private VRCPlayerApi player;
- private Transform standing; private Vector3 lastPos;
+ private Transform standing; private Vector3 lastPos; private float lastYaw; private bool haveYaw;
  private int frame;
  private void Start(){player=Networking.LocalPlayer;Spin(true);}
  private void Update(){Spin(false);}
@@ -65,8 +66,19 @@ public class AstraCloudOrbit : UdonSharpBehaviour {
   }
   if(now!=null&&now==standing){
    Vector3 delta=now.position-lastPos;
-   if(delta.sqrMagnitude>.000001f&&delta.sqrMagnitude<1f)
-    player.TeleportTo(p+delta,player.GetRotation(),VRC_SceneDescriptor.SpawnOrientation.AlignPlayerWithSpawnPoint,true);
+   // 2026-10-03 (Claude): this used to pass player.GetRotation() straight back with AlignPlayerWithSpawnPoint.
+   // Looking far up or down puts pitch/roll into that rotation, the teleport wrote it onto the player's body,
+   // and the next frame read it back bigger - the view spun out of control. Keep the yaw only, so the carry
+   // never touches which way you are looking.
+   if(delta.sqrMagnitude>.000001f&&delta.sqrMagnitude<1f){
+    // 2026-10-04 (Claude): when you look almost straight up or down the flattened forward vector gets tiny and its
+    // direction is noise, which can still twist you. Below that point keep the last good heading instead.
+    Vector3 fwd=player.GetRotation()*Vector3.forward;fwd.y=0f;
+    if(fwd.sqrMagnitude>.04f){lastYaw=Mathf.Atan2(fwd.x,fwd.z)*Mathf.Rad2Deg;haveYaw=true;}
+    else if(!haveYaw){standing=now;lastPos=now.position;return;}
+    Quaternion flat=Quaternion.Euler(0f,lastYaw,0f);
+    player.TeleportTo(p+delta,flat,VRC_SceneDescriptor.SpawnOrientation.AlignPlayerWithSpawnPoint,true);
+   }
   }
   standing=now;if(now!=null)lastPos=now.position;
  }

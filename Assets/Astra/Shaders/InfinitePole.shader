@@ -53,7 +53,8 @@ Shader "Astra/Infinite Pole"
   float aa=saturate(1-length(fwidth(uv))*.3);
   float sparkle=aa*crystal*step(.35,h)*pow(.5+.5*sin(_Time.y*1.6+h*60+dot(eye,n)*22),10);
   float3 gem=lerp(float3(1,1,1),.6+.4*cos(float3(0,2,4)+h*6.28+_Time.y*.1),.45);
-  chrome+=gem*sparkle*_Sparkle*4;
+  // 2026-10-04 (Claude): the crystal dots on the pole are gone (Astra asked); the code is kept but adds nothing.
+  chrome+=gem*sparkle*_Sparkle*0;
   float fade=smoothstep(80,120,abs(i.world.y-_WorldSpaceCameraPos.y));
   return half4(StormDim(chrome),(1-fade)*_Opacity);
  }

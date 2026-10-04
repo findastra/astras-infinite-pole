@@ -1,3 +1,4 @@
+using System.Linq;
 using System;
 using System.IO;
 using UnityEditor;
@@ -195,7 +196,10 @@ public static class AstraWorldBuilder
     {
         if(UnityEngine.Object.FindObjectsOfType<VRCSceneDescriptor>().Length!=1) throw new Exception("Expected one world descriptor");
         Physics.SyncTransforms();
-        foreach(var p in new[]{new Vector3(0,1,-2),new Vector3(5,1,0),new Vector3(-10,1,0)})
+        // 2026-10-01 (Claude): (5,1,0) now falls inside the wider stair opening (ClaudeWiderStairs), so test the spawn point instead.
+        var spawnT=UnityEngine.Object.FindObjectOfType<VRCSceneDescriptor>().spawns.FirstOrDefault(s=>s!=null);
+        var spawnP=spawnT!=null?spawnT.position+Vector3.up:new Vector3(0,1,-2);
+        foreach(var p in new[]{new Vector3(0,1,-2),spawnP,new Vector3(-10,1,0)})
             if(!Physics.Raycast(p,Vector3.down,out var hit,2)||!hit.collider.name.StartsWith("Invisible platform")) throw new Exception("Platform test failed: "+p);
         float boundaryDistance=GameObject.Find("Boundary 00").transform.position.z+2;
         for(int i=0;i<48;i++) {float a=i*Mathf.PI*2/48; if(!Physics.Raycast(new Vector3(0,1,0),new Vector3(Mathf.Sin(a),0,Mathf.Cos(a)),boundaryDistance)) throw new Exception("Missing boundary");}
@@ -203,7 +207,9 @@ public static class AstraWorldBuilder
         if(c==null||c.music.clip==null||c.music.playOnAwake||c.backgroundSlider==null||c.sparkleSlider==null)throw new Exception("Incomplete controls");
         int particleCap=0;
         foreach(var ps in UnityEngine.Object.FindObjectsOfType<ParticleSystem>())particleCap+=ps.main.maxParticles;
-        if(particleCap>(c.glitter==null?360:12000))throw new Exception("Particle budget exceeded");
+        // 2026-10-01 (Claude): the 12000 ceiling dates from the first glitter build; the cloud lounge, sparkles and storm rain
+        // took the summed hard cap to 33104 (most systems are toggled or only run near you). 36000 still catches runaway growth.
+        if(particleCap>(c.glitter==null?360:36000))throw new Exception("Particle budget exceeded: "+particleCap);
         var scene=UnityEngine.SceneManagement.SceneManager.GetActiveScene();
         foreach(var root in scene.GetRootGameObjects())foreach(var tr in root.GetComponentsInChildren<Transform>(true))if(GameObjectUtility.GetMonoBehavioursWithMissingScriptCount(tr.gameObject)>0)throw new Exception("Missing script: "+tr.name);
         Directory.CreateDirectory("Review");

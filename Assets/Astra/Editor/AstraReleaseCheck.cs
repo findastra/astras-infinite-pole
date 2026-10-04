@@ -64,9 +64,16 @@ public static class AstraReleaseCheck
             if(EditorUserBuildSettings.activeBuildTarget!=BuildTarget.StandaloneWindows64)throw new Exception("Expected Windows 64-bit build target");
             var world=await VRCApi.GetWorld(WorldId,true);
             if(world.AuthorId!=APIUser.CurrentUser.id)throw new Exception("SDK account is not the world owner");
-            world.Description="Infinite Spiral v0.6.0 | Walkable floating pink/rainbow glitter staircase extending upward, varied clouds above and below the floor, sharper pole rendering. Collision-free pole, optional hover, petals, personal effects and shuffled playlist. Respawn returns to floor. Menus: hands together, pause, pull apart; repeat to close or desktop M. PC VR / desktop. Source: https://github.com/findastra/astras-infinite-pole/tree/v0.6.0-infinite-spiral (repository access required).";
+            world.Description="Astra's Infinite Pole v0.10.0 | A walkable rainbow glitter spiral round an endless pole over a pink cloud sea. Cloud lounge with smooth cloud furniture, swings, crystal chandeliers, phone booths, DJ cloud and a cloud movie theatre with seats on top of the screen. STORMSCAPE switch: storm clouds, rain, lightning and thunder. Menu: hands together, pause, pull apart; desktop M. PC VR / desktop."; desktop M. PC VR / desktop.";
             File.WriteAllText("Review/reupload-status.txt","Building Windows update for existing world. Preserving release status: "+world.ReleaseStatus);
             await builder.BuildAndUpload(world,Path.GetFullPath("docs/images/spiral.png"),System.Threading.CancellationToken.None);
+            // 2026-10-04 (Claude): BuildAndUpload keeps the old description on an existing world, so push the info too
+            // (looked up by name so an SDK without this call still compiles and uploads).
+            try{var m=typeof(VRCApi).GetMethods().FirstOrDefault(x=>x.Name=="UpdateWorldInfo"&&x.GetParameters().Length>=2);
+                if(m!=null){var args=new object[m.GetParameters().Length];args[0]=WorldId;args[1]=world;for(int i=2;i<args.Length;i++)args[i]=m.GetParameters()[i].HasDefaultValue?m.GetParameters()[i].DefaultValue:null;
+                    var task=m.Invoke(null,args) as System.Threading.Tasks.Task;if(task!=null)await task;File.AppendAllText("Review/reupload-status.txt","\nDescription updated.");}
+                else File.AppendAllText("Review/reupload-status.txt","\nDescription NOT updated (SDK has no UpdateWorldInfo).");}
+            catch(Exception de){File.AppendAllText("Review/reupload-status.txt","\nDescription update failed: "+de.Message);}
             var updated=await VRCApi.GetWorld(WorldId,true);
             EditorSceneManager.SaveScene(UnityEngine.SceneManagement.SceneManager.GetActiveScene());
             File.WriteAllText("Review/reupload-status.txt","Uploaded existing world: https://vrchat.com/home/world/"+WorldId+"\nVersion: "+updated.Version+"\nRelease: "+updated.ReleaseStatus+"\nServer processing and client join must still be checked.");
