@@ -64,7 +64,7 @@ public static class AstraReleaseCheck
             if(EditorUserBuildSettings.activeBuildTarget!=BuildTarget.StandaloneWindows64)throw new Exception("Expected Windows 64-bit build target");
             var world=await VRCApi.GetWorld(WorldId,true);
             if(world.AuthorId!=APIUser.CurrentUser.id)throw new Exception("SDK account is not the world owner");
-            world.Description="Astra's Infinite Pole v0.10.0 | A walkable rainbow glitter spiral round an endless pole over a pink cloud sea. Cloud lounge with smooth cloud furniture, swings, crystal chandeliers, phone booths, DJ cloud and a cloud movie theatre with seats on top of the screen. STORMSCAPE switch: storm clouds, rain, lightning and thunder. Menu: hands together, pause, pull apart; desktop M. PC VR / desktop."; desktop M. PC VR / desktop.";
+            world.Description="Astra's Infinite Pole v0.10.0 | A walkable rainbow glitter spiral round an endless pole over a pink cloud sea. Cloud lounge with smooth cloud furniture, swings, crystal chandeliers, phone booths, DJ cloud and a cloud movie theatre with seats on top of the screen. STORMSCAPE switch: storm clouds, rain, lightning and thunder. Menu: hands together, pause, pull apart; desktop M. PC VR / desktop.";
             File.WriteAllText("Review/reupload-status.txt","Building Windows update for existing world. Preserving release status: "+world.ReleaseStatus);
             await builder.BuildAndUpload(world,Path.GetFullPath("docs/images/spiral.png"),System.Threading.CancellationToken.None);
             // 2026-10-04 (Claude): BuildAndUpload keeps the old description on an existing world, so push the info too
