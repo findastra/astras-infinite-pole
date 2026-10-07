@@ -9,7 +9,7 @@ public static class AstraPosterBackdrops {
  public static void RenderPortrait(){RenderSet(true);}
  static void RenderSet(bool portrait){
   EditorSceneManager.OpenScene("Assets/Astra/Scenes/AstrasInfinitePole.unity");
-  string output=@"C:\Users\audra\Documents\ChatGPT\Mommy's 2\Poster Backdrops";
+  string output=@"C:\Users\audra\Documents\ChatGPT\Mommy's World\Poster Backdrops";
   if(portrait)output+=" Portrait";
   Directory.CreateDirectory(output);
   int width=portrait?2400:3840,height=portrait?3840:2400;

@@ -6,12 +6,12 @@ using UnityEditor;
 
 public static class AstraLocalLaunchers
 {
-    [MenuItem("Astra/Local/Launch Claude Presence")]
-    public static void LaunchClaudePresence()
+    [MenuItem("Astra/Local/Launch Anthropic Presence")]
+    public static void LaunchAnthropicPresence()
     {
-        var dir = Path.Combine(System.Environment.GetFolderPath(System.Environment.SpecialFolder.MyDocuments), "claude-discord-presence");
-        var cmd = Path.Combine(dir, "Start Claude Presence.cmd");
-        if (!File.Exists(cmd)) throw new FileNotFoundException("Claude Presence not found", cmd);
+        var dir = Path.Combine(System.Environment.GetFolderPath(System.Environment.SpecialFolder.MyDocuments), "Projects", "anthropic-discord-presence");
+        var cmd = Path.Combine(dir, "Start Anthropic Presence.cmd");
+        if (!File.Exists(cmd)) throw new FileNotFoundException("Anthropic Presence not found", cmd);
         Process.Start(new ProcessStartInfo { FileName = cmd, WorkingDirectory = dir, UseShellExecute = true });
         File.WriteAllText("Review/agent-queue/_claude-presence-launch.txt", "Launched " + cmd + " at " + System.DateTime.Now.ToString("HH:mm:ss") + "\n");
     }
