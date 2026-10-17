@@ -11,7 +11,7 @@ public static class AstraClaudeGit
 {
     const string Log = "Review/git-log.txt";
     const string Result = "Review/git-push-result.txt";
-    const string Tag = "v0.10.0-theatre";
+    const string Tag = "v0.10.1-fuzzy-clouds";
     static void Append(string s) { Directory.CreateDirectory("Review"); File.AppendAllText(Log, DateTime.Now.ToString("HH:mm:ss ") + s + "\n"); }
 
     [MenuItem("Astra/Claude/6 Install Git (winget, official package)")]
@@ -72,17 +72,17 @@ public static class AstraClaudeGit
         run("config user.email \"findastra@users.noreply.github.com\"");
         run("add -A");
         File.WriteAllText("Review/commit-msg.txt",
-            "Cloud theatre, one tab menu, smooth cloud furniture\n\n" +
-            "- Movie theatre at the big screen: a row of VRChat chairs, private cloud boxes above, seats on a cloud on top of the screen\n" +
-            "- One menu with WORLD / SKY / GLITTER / MAGIC tabs, bigger text, visible sliders, rainbow stair colour slider\n" +
-            "- Video skip back / forward buttons\n" +
-            "- Cloud lounge furniture melted into smooth connected clouds; DJ booth no longer cut by cloud\n" +
-            "- Removed trees, butterflies, breakfast nook, cloud sparkle rain, three skies and the pole sparkle dots\n" +
-            "- Glow orbs all within reach; no more spinning when looking up/down on moving clouds\n\n" +
+            "Fuzzy connected clouds, theatre removed\n\n" +
+            "- Spiral and outer clouds rebuilt as connected fused shapes (Blender source in Tools/Blender), smoothed once more\n" +
+            "- Thin support slabs under every walkable cloud, inside its outline seen from above\n" +
+            "- Every lounge cloud group melted into one soft shape (68 were still loose puffs)\n" +
+            "- Fuzzy cotton cloud texture with a soft edge sheen; the bump relief that looked like dented foil is off\n" +
+            "- Pink cloud-sea puffs now match the white pastel clouds\n" +
+            "- Cloud theatre removed (chairs, private boxes, screen-top cloud)\n\n" +
             "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n" +
             "Claude-Session: https://claude.ai/code/session_01RryzTe5YiXokw79j7NrjXC\n");
         run("commit -F Review/commit-msg.txt");
-        run("tag -a " + Tag + " -m \"Cloud theatre, tab menu, smooth cloud furniture\"");
+        run("tag -a " + Tag + " -m \"Fuzzy connected clouds, theatre removed\"");
         run("push -u origin HEAD:refs/heads/release/" + Tag);
         run("push origin " + Tag);
         run("log --oneline -3");
