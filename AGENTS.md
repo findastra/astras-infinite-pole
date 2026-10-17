@@ -12,3 +12,10 @@ For every project going forward:
 8. Keep repositories private unless the user authorizes public source. Explain that private version links are visible only to collaborators.
 
 9. After each world update, launch VRChat in desktop mode into the updated world or its local SDK test build, and report which version is running.
+
+# Clouds and walkable colliders (owner request 2026-10-06)
+
+- Clouds should look connected and organic, not like stacked round spheres.
+- Every solid cloud support collider is a thin horizontal slab (0.06 m). It sits under the visible top and inside the cloud's outline seen from above: no invisible side walls, nothing sticking out.
+- Seats, tables, booths, triggers and stations are not support colliders.
+- Tooling: `Assets/Astra/Editor/ClaudeCloudRedo.cs` (menu Astra/Claude/36*). Notes: `CLAUDE.md`, `Review/cloud-redo/result.md`.

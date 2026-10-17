@@ -209,7 +209,8 @@ public static class AstraWorldBuilder
         foreach(var ps in UnityEngine.Object.FindObjectsOfType<ParticleSystem>())particleCap+=ps.main.maxParticles;
         // 2026-10-01 (Claude): the 12000 ceiling dates from the first glitter build; the cloud lounge, sparkles and storm rain
         // took the summed hard cap to 33104 (most systems are toggled or only run near you). 36000 still catches runaway growth.
-        if(particleCap>(c.glitter==null?360:36000))throw new Exception("Particle budget exceeded: "+particleCap);
+        // 2026-10-10 (Claude, round 38): +41 always-on sparkle slurries round the grabbable eggs and glow orbs (about 10k) -> 46000.
+        if(particleCap>(c.glitter==null?360:46000))throw new Exception("Particle budget exceeded: "+particleCap);
         var scene=UnityEngine.SceneManagement.SceneManager.GetActiveScene();
         foreach(var root in scene.GetRootGameObjects())foreach(var tr in root.GetComponentsInChildren<Transform>(true))if(GameObjectUtility.GetMonoBehavioursWithMissingScriptCount(tr.gameObject)>0)throw new Exception("Missing script: "+tr.name);
         Directory.CreateDirectory("Review");

@@ -233,6 +233,9 @@ public static class ClaudeRound32
     }
     static void Theatre()
     {
+        // 2026-10-07: the owner asked for the whole theatre to go (round 37 deletes it); a rerun of 32 no longer builds it.
+        report.Add("theatre: skipped (removed by owner request, round 37)"); return;
+#pragma warning disable CS0162
         CloudPieces();
         var scene = EditorSceneManager.GetActiveScene();
         foreach (var old in SceneTransforms().Where(t => t.name == TheatreName).ToList()) Object.DestroyImmediate(old.gameObject);
@@ -314,6 +317,7 @@ public static class ClaudeRound32
     }
 
     // ---------------------------------------------------------------- 5
+#pragma warning restore CS0162
     static void Photos()
     {
         string dir = "Review/Photos/Round32"; Directory.CreateDirectory(dir);
