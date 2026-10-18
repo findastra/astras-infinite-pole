@@ -38,7 +38,7 @@ Pushed work that had existed only on Astra's PC:
 
 ## Update, 2026-10-18
 - **Folder rule settled (Astra, 2026-10-17).** Project folders live in `Documents\Astra's PetOS\<repo>`, for now a junction to `Astra's Pet Apps`. That answers the `Documents\Projects` question in open item 2.
-- **File Master row written.** I wrote an **unapproved** File Master row in its ignored local `reports/2026-10-18_astras-infinite-pole-folder/plan.csv`: move this working copy to `Astra's Pet Appsstras-infinite-pole`.
+- **File Master row written.** I wrote an **unapproved** File Master row in its ignored local `reports/2026-10-18_astras-infinite-pole-folder/plan.csv`: move this working copy to `Astra's Pet Apps\astras-infinite-pole`.
   - **Blockers:** Unity must be closed, and this chat must be closed.
   - **After the move:** re-add the project in Unity Hub and the Creator Companion, and update the paths that point inside it.
   - Nothing has been moved.
