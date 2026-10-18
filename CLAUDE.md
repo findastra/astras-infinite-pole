@@ -11,6 +11,8 @@ Skills (on Astra's PC):
 - `%USERPROFILE%\.claude\skills\vrchat-unity-world\SKILL.md`: agent queue, colliders, pickups, renders, desktop test.
 - `%USERPROFILE%\.codex\skills\blender-unity-assets\SKILL.md`: Blender meshes. Run Blender with `--python-exit-code 1` before `--python`.
 
+Folder (Astra, 2026-10-17): project folders live in `%USERPROFILE%\Documents\Astra's PetOS\<repo>` (for now a junction to `Astra's Pet Apps`). This world's copy still sits in `Documents\ChatGPT\Mommy's Discord\Astra-Infinite-Pole`; the move to `astras-infinite-pole` is an unapproved File Master plan row (2026-10-18). Don't move it yourself.
+
 Git (Astra, 2026-10-12):
 - Pull before you start.
 - Push before you stop: commit to a branch named for the assistant and date (`claude/<topic>-YYYYMMDD`) and push it, even if unfinished. Work that is only on the PC counts as lost.

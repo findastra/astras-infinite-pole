@@ -35,3 +35,12 @@ Pushed work that had existed only on Astra's PC:
 - I haven't looked at the world inside VRChat myself.
 - VR comfort and frame time with the 41 always-on sparkle systems are untested.
 - I didn't merge this branch into Unity on another PC.
+
+## Update, 2026-10-18
+- **Folder rule settled (Astra, 2026-10-17).** Project folders live in `Documents\Astra's PetOS\<repo>`, for now a junction to `Astra's Pet Apps`. That answers the `Documents\Projects` question in open item 2.
+- **File Master row written.** I wrote an **unapproved** File Master row in its ignored local `reports/2026-10-18_astras-infinite-pole-folder/plan.csv`: move this working copy to `Astra's Pet Appsstras-infinite-pole`.
+  - **Blockers:** Unity must be closed, and this chat must be closed.
+  - **After the move:** re-add the project in Unity Hub and the Creator Companion, and update the paths that point inside it.
+  - Nothing has been moved.
+- **Pole Puff's program is now named Infinite Studio** (hub card 024). The `pole-puff` repo is approved but not created yet; that's card 024's work, not this branch's.
+- **`CLAUDE.md`** now states the folder rule.
