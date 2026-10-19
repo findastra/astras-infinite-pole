@@ -32,6 +32,7 @@ Project facts:
   - Re-run `Astra/Claude/36h` (restore) before `36e` (apply).
   - For round 38, use `38r` before `38c`.
   - Validate with `36g` and `36i`.
+- **Phone booths (round 40, 2026-10-19):** the K6 kiosk from Unity Unicorn's library (`liminal-doors-phone-booth` v1.0.0, `Assets/LiminalDoors/Booth`) sits in all three booths; the old look is off, not deleted. Restore with `40r` before re-running `40`. Its floor is named `Cloud booth floor (K6)` so the orbit carry works.
 - **Eggs and glow orbs are pickups:** audit them with `38b`. The particle ceiling in `AstraWorldBuilder.Verify` is 46,000.
 - **The cloud shader's texture is opt-in** (keyword `_CLOUDTEX`). The DJ deck, booths and chairs share the shader without it.
 - Upload or publish only after the owner says yes in chat. Never accept rights or terms for her.
