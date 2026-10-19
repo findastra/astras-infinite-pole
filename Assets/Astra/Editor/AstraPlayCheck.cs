@@ -69,7 +69,7 @@ public static class AstraPlayCheck
             if(magic!=null){
                 var mu=UdonSharpEditorUtility.GetBackingUdonBehaviour(magic);
                 Require(magic.glitterVolume!=null && Vector3.Distance(magic.glitterVolume.position,VRC.SDKBase.Networking.LocalPlayer.GetPosition())<.1f,"Glitter volume did not follow player");
-                Require(magic.cloudVolume!=null && Vector3.Distance(magic.cloudVolume.position,VRC.SDKBase.Networking.LocalPlayer.GetPosition()+Vector3.up*3.5f)<.1f,"Cloud volume did not follow player");
+                Require(magic.cloudVolume!=null && Vector3.Distance(magic.cloudVolume.position,VRC.SDKBase.Networking.LocalPlayer.GetPosition()+Vector3.down*2f)<.1f,"Cloud volume did not follow player");
                 Require(magic.materials[0].GetFloat("_React")==1,"Player wake runtime update failed");
                 magic.trailToggle.isOn=true;foreach(var trail in magic.trails)Require(trail.isPlaying,"Trail toggle failed");
                 magic.trailToggle.isOn=false;foreach(var trail in magic.trails)Require(!trail.isPlaying&&trail.particleCount==0,"Trail clear failed");
@@ -134,6 +134,7 @@ public static class AstraPlayCheck
         Debug.Log("ASTRA_GLITTER_PLAY_OK");
     }
 }
+
 
 
 

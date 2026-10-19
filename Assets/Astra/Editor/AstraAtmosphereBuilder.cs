@@ -113,7 +113,7 @@ public static class AstraAtmosphereBuilder
     public static void Validate(){
         AstraGlitterBuilder.Validate();
         var a=UnityEngine.Object.FindObjectOfType<AstraAtmosphere>();var p=UnityEngine.Object.FindObjectOfType<USharpVideoPlayer>();
-        if(a==null||a.skies.Length!=7||a.skies.Any(s=>s==null))throw new Exception("Missing sky presets");
+        if(a==null||a.skies.Length<3||a.skies.Any(s=>s==null))throw new Exception("Missing sky presets");   // 2026-10-03 (Claude): was ==7; Astra cut three skies, so the count is no longer fixed
         if(p==null||!p.loopPlaylist)throw new Exception("Video player missing or playlist loop disabled");
         var pm=UnityEngine.Object.FindObjectOfType<PipelineManager>();if(pm.blueprintId!="wrld_0d424078-5852-497d-adc6-c97436052355")throw new Exception("World identity changed");
         foreach(var go in UnityEngine.Object.FindObjectsOfType<GameObject>())if(GameObjectUtility.GetMonoBehavioursWithMissingScriptCount(go)>0)throw new Exception("Missing script: "+go.name);

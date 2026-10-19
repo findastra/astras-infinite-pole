@@ -30,3 +30,11 @@ Scene/Udon/shader validation passed. Pole has zero colliders. Reference camera h
 Bloom-on/off render comparison changes 31.8% of pixels, increasing mean RGB from 9.80 to 10.03. This verifies postprocessing runs; it does not establish perceived sparkle quality in a headset. In-world perimeter appearance, hover motion/comfort, menu targeting and PC VR frame time still need live testing. Windows build pending.
 
 Pinkscape Windows SDK bundle build passed on 2026-09-15. Live upload remains pending.
+
+## Infinite Spiral checks — 2026-09-22
+
+Procedural stair mesh and cloud/pole shaders compiled. All 40 walking-height raycasts around the first turn passed. The pole still has no colliders. Actual ClientSim/Udon test moved the player to 140m, verified recycling, raycast collision on a recycled section, altitude following of the pole/cloud emitter, and correct restoration on return to spawn. Existing glitter, menu, hover, petals, sky, trails and music regression checks passed.
+
+Clouds now use world-space simulation, a 42x15x42m volume centered two metres below the player, independently varied start sizes/aspect, rotation, speed, lifetime and color-encoded noise seeds. No refractive GrabPass, depth-of-field or motion blur is configured. Only bloom remains, with threshold 1.1, intensity 1.35 and diffusion 4. Pole depth/color render earlier, with derivative filtering of tiny crystal patterns. These are targeted mitigations, not proof that the user's headset distortion is resolved.
+
+Capacity: 11,780 particles maximum. Eleven stair renderers and eleven static mesh colliders recycle locally; 40 visible treads per turn. Floating-point precision still limits extreme real-world coordinates; the pool supports continued ascent rather than preallocating an infinite mesh. Headset stereo quality, live walking/extended climbing and GPU performance remain unverified. Reference inspection used Sky Island's public thumbnail and description; no third-party assets copied.
