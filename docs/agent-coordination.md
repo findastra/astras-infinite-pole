@@ -82,3 +82,7 @@ Round 37 | Claude | Editor/ClaudeRound37.cs (menu 37, restore 37r), Shaders/Glit
 
 ## R38 — fused cloud sea, stray ball clouds, sparkle pickups (owner request 2026-10-10)
 Round 38 | Claude | new Editor/ClaudeRound38.cs, new Tools/Blender/fuse_sea.py (+ out/), new Meshes/CloudRedo/Sea*, scene: cloud sea + banner mound renderers, stray single puffs, glow orb / easter egg pickups and their sparkle particles | sea fused like the orbit clouds, no random balls posing as clouds, every pickup grabbable, much denser sparkle | READY_FOR_REVIEW (2026-10-10, Review/round38/result.md)
+## VS — vine-spawn-with-trumpet-flowers install (Claude, 2026-10-19)
+State: READY_FOR_REVIEW (2026-10-19 22:25, see `docs/handoff-claude-20261019-vines.md`). Owner: Claude (Astra's OK in chat, 2026-10-19). The tool is Unity Unicorn's (findastra/unity-unicorn main, PR #18).
+- Files: new `Assets/UnityUnicorn/Editor/vine-spawn-with-trumpet-flowers-20261019.cs` (+ .meta). Only after Astra picks the objects: `Assets/UnityUnicorn/Shaders/Unity Stable Vine Bloom.shader`, `Assets/UnityUnicorn/Generated/Vines/*`, and one new scene root "Vines with trumpet flowers (Unity Unicorn)". One Undo removes a Grow.
+- Also new: `Assets/Astra/Editor/ClaudeVines20261019.cs` (menus Astra/Claude/Vines 1 survey, 2 grow, 3 remove; reports in `Review/vines-20261019/`). Otherwise untouched: `Assets/Astra/`, clouds, colliders, booths, Udon. Job files and usage receipts go to `UnityUnicornReports/` (project root, private).
