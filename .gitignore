@@ -88,3 +88,7 @@ crashlytics-build.properties
 *.pem
 
 /ClientSimStorage/
+
+# Unity Unicorn's vine tool: page jobs and usage receipts stay on this PC
+/UnityUnicornReports/
+/UnityUnicornInbox/
