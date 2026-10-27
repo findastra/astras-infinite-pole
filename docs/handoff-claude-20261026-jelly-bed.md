@@ -39,3 +39,30 @@ astras infinite pole".
    regenerated Udon programs) are not mine and are not in this branch.
 
 Made with Claude Opus 5.5 (`claude-opus-5-5`), 2026-10-26.
+
+## Round 2 (2026-10-27, Astra in chat)
+
+Asked: the K6 booths in "the neon pink that's in my VRChat banner", hinges and crowns silver and sparkling, the vines off
+the booth, and the jelly bed "in front of the theater" in a see-through cloud cup with red, orange, yellow, green, blue,
+purple and pink chairs in a loose pattern, different sizes.
+
+- **Booths** (menu Jelly bed 8): banner pink measured from `mommys/banner-booth.jpg` = #F61A7E. World-only copies of the
+  K6 albedo, emission and metallic maps in `Assets/Astra/Textures/Booth neon pink/`, on
+  `Assets/Astra/Materials/Booth neon pink (Pole).mat` (the library's Booth.mat is unchanged). Pink pixels take the banner
+  pink at their own shading and glow a little in it (this world's sun is 0.55); the texture pink carries extra blue
+  because the warm light and grading eat blue. Rendered body measured #FF1180 lit, #F40D70 shaded. Gold pixels
+  (hinges, crowns, handle) are silver metal with scattered glints in the glow map. The cream TELEPHONE plates stay.
+  Astra did not like a first try that only tinted and glowed the old texture.
+- **Vines:** `Banner booth vines` removed; DJ booth and bench vines stay (the vine tool gets fixed first).
+- **Cinema deck** (menu Jelly bed 6): "the theater" is the cinema screen (VideoScreen at 18, 15, 14.4, facing the pole).
+  New root "Cinema cloud cup and rainbow chairs (Claude)" on the ground 11 m in front of it. The jelly bed moved into a
+  cup of 36 pink-glass cloud puffs (Booth glass (pink) on the Tiny cloud chair puff mesh), three invisible walls, open
+  toward the screen. The jelly is now `Jelly blue (Pole).mat` (blue, transparency 0.8).
+- **Seven rainbow chairs:** copies of the Tea lounge cloud armchair in Glitter Cloud rainbow colours
+  (`Rainbow chair <colour>.mat`), sizes 0.8-1.3x, scattered behind and beside the cup, turned to the screen with a
+  little jitter, each nudged out of every orbiting cloud's path. Each has the SDK's VRCChair3 (click to sit) on its seat
+  with the SDK chair mesh hidden.
+- Menu 9 frames the deck in the Scene view. Backup before round 2: `Review/Backups/jelly-bed-20261026/AstrasInfinitePole-before-round2.unity`.
+
+Open after round 2: sitting position on each chair not checked in the client; the jelly dent still not felt; Astra may
+send a drawing for the chair layout.
