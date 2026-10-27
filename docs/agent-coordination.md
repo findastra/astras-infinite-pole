@@ -86,3 +86,8 @@ Round 38 | Claude | new Editor/ClaudeRound38.cs, new Tools/Blender/fuse_sea.py (
 State: READY_FOR_REVIEW (2026-10-19 22:25, see `docs/handoff-claude-20261019-vines.md`). Owner: Claude (Astra's OK in chat, 2026-10-19). The tool is Unity Unicorn's (findastra/unity-unicorn main, PR #18).
 - Files: new `Assets/UnityUnicorn/Editor/vine-spawn-with-trumpet-flowers-20261019.cs` (+ .meta). Only after Astra picks the objects: `Assets/UnityUnicorn/Shaders/Unity Stable Vine Bloom.shader`, `Assets/UnityUnicorn/Generated/Vines/*`, and one new scene root "Vines with trumpet flowers (Unity Unicorn)". One Undo removes a Grow.
 - Also new: `Assets/Astra/Editor/ClaudeVines20261019.cs` (menus Astra/Claude/Vines 1 survey, 2 grow, 3 remove; reports in `Review/vines-20261019/`). Otherwise untouched: `Assets/Astra/`, clouds, colliders, booths, Udon. Job files and usage receipts go to `UnityUnicornReports/` (project root, private).
+
+## JB — first squishy jelly bed (Claude, 2026-10-26)
+State: READY_FOR_REVIEW (2026-10-27 00:00, see `docs/handoff-claude-20261026-jelly-bed.md`). Owner: Claude (Astra asked in chat: "lets make our first chair in astras infinite pole").
+- Files: new `Assets/DynamicMochiMochi/**` (OmochiNobiru's DynamicMochiMochiShader v12, MIT, Booth 3129610, unchanged), its two compiled Udon programs in `Assets/SerializedUdonPrograms/` (b327581d…, d96838f6…), new `Assets/Astra/Editor/ClaudeJellyBed20261026.cs` (menus Astra/Claude/Jelly bed 1 survey, 2 place, 3 remove), new `Assets/Astra/Materials/Jelly bed base.mat`, scene: one new root "Jelly bed (Claude)" only.
+- Untouched: clouds, colliders, Udon of the world, the "Soft avatar light". Backup `Review/Backups/jelly-bed-20261026/`.
