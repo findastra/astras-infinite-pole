@@ -52,6 +52,70 @@ public static class ClaudeJellyBed20261026
         File.WriteAllText(Path.Combine(Out, "survey.md"), string.Join("\n", rep) + "\n");
     }
 
+    // Round 2 (Astra, 2026-10-27): booths back to neon pink, the bed in a cloud cup in front of the theatre, rainbow chairs.
+    [MenuItem("Astra/Claude/Jelly bed 4 survey theatre")]
+    public static void SurveyTheatre()
+    {
+        Directory.CreateDirectory(Out);
+        var rx = new System.Text.RegularExpressions.Regex(@"(?i)(theat|cinema|screen|movie|stage|^1\d - |booth|armchair|^sofa$|chair|seat|station)");
+        var rep = new List<string> { "# Theatre survey " + System.DateTime.Now.ToString("yyyy-MM-dd HH:mm"), "" };
+        foreach (var t in Object.FindObjectsOfType<Transform>(true).Where(t => rx.IsMatch(t.name)).OrderBy(t => PathOf(t)).Take(260))
+        {
+            var rs = t.GetComponentsInChildren<Renderer>().Where(r => r.enabled).ToList();
+            string bounds = "";
+            if (rs.Count > 0) { var b = rs[0].bounds; foreach (var r in rs) b.Encapsulate(r.bounds); bounds = " centre " + b.center.ToString("0.0") + " size " + b.size.ToString("0.0"); }
+            var comps = string.Join(",", t.GetComponents<Component>().Where(c => c && !(c is Transform)).Select(c => c.GetType().Name));
+            var mats = t.GetComponent<Renderer>() ? " mats " + string.Join(",", t.GetComponent<Renderer>().sharedMaterials.Where(m => m).Select(m => m.name + "(" + m.shader.name + ")")) : "";
+            rep.Add("- `" + PathOf(t) + "` active=" + t.gameObject.activeInHierarchy + bounds + " [" + comps + "]" + mats);
+        }
+        rep.Add(""); rep.Add("## Old booth body colours");
+        foreach (var r in Object.FindObjectsOfType<Renderer>(true).Where(r => r.name == "Booth body" || r.name == "Booth sign glow"))
+            foreach (var m in r.sharedMaterials.Where(m => m))
+                rep.Add("- `" + PathOf(r.transform) + "` " + m.name + " (" + m.shader.name + ") " + string.Join(" ", new[] { "_Color", "_EmissionColor", "_TintColor", "_MainColor", "_GlowColor" }.Where(m.HasProperty).Select(p => p + "=" + m.GetColor(p))));
+        var K6 = Object.FindObjectsOfType<Renderer>().Where(r => PathOf(r.transform).Contains("K6")).SelectMany(r => r.sharedMaterials).Where(m => m).Distinct();
+        rep.Add(""); rep.Add("## K6 materials");
+        foreach (var m in K6) rep.Add("- " + m.name + " `" + AssetDatabase.GetAssetPath(m) + "` (" + m.shader.name + ")" + (m.HasProperty("_Color") ? " _Color=" + m.GetColor("_Color") : ""));
+        File.WriteAllText(Path.Combine(Out, "theatre-survey.md"), string.Join("\n", rep) + "\n");
+    }
+
+    [MenuItem("Astra/Claude/Jelly bed 5 survey cinema")]
+    public static void SurveyCinema()
+    {
+        Directory.CreateDirectory(Out);
+        Physics.SyncTransforms();
+        var rep = new List<string> { "# Cinema survey " + System.DateTime.Now.ToString("yyyy-MM-dd HH:mm"), "" };
+        var scr = Object.FindObjectsOfType<Transform>().First(t => t.name == "VideoScreen");
+        var mf = scr.GetComponent<MeshFilter>();
+        rep.Add("- screen pos " + scr.position.ToString("0.00") + " fwd " + scr.forward.ToString("0.00") + " up " + scr.up.ToString("0.00") + " right " + scr.right.ToString("0.00") + " lossy " + scr.lossyScale.ToString("0.00") + " mesh " + mf.sharedMesh.name + " local bounds " + mf.sharedMesh.bounds.size.ToString("0.00"));
+        if (mf.sharedMesh.normals.Length > 0) rep.Add("- mesh normal[0] world " + scr.TransformDirection(mf.sharedMesh.normals[0]).ToString("0.00"));
+        foreach (var n in new[] { "Cloud keep-clear - video screen", "Screen cloud kill zone", "Spawn - facing pole" })
+        {
+            var t = Object.FindObjectsOfType<Transform>(true).FirstOrDefault(x => x.name == n);
+            if (t) rep.Add("- `" + n + "` pos " + t.position.ToString("0.00") + " scale " + t.lossyScale.ToString("0.0") + " rot " + t.eulerAngles.ToString("0") + (t.GetComponent<BoxCollider>() ? " box " + t.GetComponent<BoxCollider>().bounds.size.ToString("0.0") : ""));
+        }
+        // Down-rays on a grid in front of the screen face: where can people stand and look at it.
+        var normal = mf.sharedMesh.normals.Length > 0 ? scr.TransformDirection(mf.sharedMesh.normals[0]).normalized : scr.forward;
+        foreach (var side in new[] { 1f, -1f })
+        {
+            rep.Add(""); rep.Add("## Floors along normal x " + side);
+            var flat = new Vector3(normal.x, 0, normal.z).normalized * side;
+            var right = Vector3.Cross(Vector3.up, flat);
+            for (float d = 6; d <= 40; d += 4)
+            {
+                var row = new List<string>();
+                for (float s = -12; s <= 12; s += 6)
+                {
+                    var o = scr.position + flat * d + right * s + Vector3.up * 30;
+                    row.Add(Physics.Raycast(o, Vector3.down, out var hit, 80, ~0, QueryTriggerInteraction.Ignore) ? hit.point.y.ToString("0.0") + "(" + hit.collider.name + ")" : "-");
+                }
+                rep.Add("- d " + d + ": " + string.Join(" | ", row));
+            }
+        }
+        var b = scr.GetComponent<Renderer>().bounds;
+        Shot("cinema", new Bounds(b.center, b.size * 1.3f));
+        File.WriteAllText(Path.Combine(Out, "cinema-survey.md"), string.Join("\n", rep) + "\n");
+    }
+
     const string RootName = "Jelly bed (Claude)", Prefab = "Assets/DynamicMochiMochi/MochiMochiJelly.prefab";
     const float Half = 2.5f, Tall = 1.3f;
     const int ShadowLayer = 31; // unnamed and empty: the shadow sun lights nothing, it only switches on the depth the jelly reads
