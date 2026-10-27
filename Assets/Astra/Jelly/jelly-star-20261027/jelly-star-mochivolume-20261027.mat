@@ -8,7 +8,7 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: jelly-star-mochivolume-20261027
-  m_Shader: {fileID: 4800000, guid: c3776ec6095d52d4ba84478883fd5938, type: 3}
+  m_Shader: {fileID: 4800000, guid: 29d77a9ddd2b0544090c9650f2d0970d, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []

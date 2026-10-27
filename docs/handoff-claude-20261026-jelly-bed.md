@@ -103,3 +103,34 @@ Editor traps found this round:
 Desktop test 2026-10-27 05:30:22: fresh build, entered the world, no Udon errors. Not checked in the client: how each
 jelly looks and dents with a body, and the frame rate with five jellies. Backup before round 3:
 `Review/Backups/jelly-bed-20261026/AstrasInfinitePole-before-round3.unity`.
+
+## Round 4 (2026-10-27, Astra in chat)
+
+Asked: move the jellies to the cinema ("I like the moon, the star, the heart, the flower"), fix the jagged look ("it's
+important that these look like jelly ... it's on all of them"), and model a rippling goop star from Super Mario Sunshine
+with a shimmery material and little blobs, on a flat white cloud by the cinema.
+
+- **Jagged edges, cause and fix.** The jelly takes its surface tilt from the height difference between neighbouring
+  pixels (1/1024 apart). Round 3's heights were 512 px, 8-bit, with a 7 cm step at the outline, so pixel stairs and 256
+  height levels showed as jagged edges and rings. Now: 1024 px heights, a quarter-circle side (no thin sliver at the
+  foot for the ray steps to miss), a 5 px blur, saved as EXR and stored as 16-bit R16 (Unity's default half floats
+  still banded the tops). The jellies use `Astra/Jelly Refraction (smooth)` (`Assets/Astra/Jelly/jelly-refraction-smooth-20261027.shader`),
+  a copy of the package shader with 96 ray steps instead of 50, 8 surface-search steps instead of 5, a per-pixel jittered
+  ray start (no slice stripes), and the sub-camera depth read fixed (the original line fails on d3d11).
+- **Moved:** heart, moon, flower at 0.62 size (3.1 m) beside and in front of the cup, 9-12 m from it (dent cameras
+  scaled with them). The white sphere cloud jelly stays past the pole (Astra did not list it). Menu 10 also takes the goop
+  star out first; run menu 13 after it.
+- **Goop star** (menu 13, root "Goop star on a white cloud (Claude)", 19 m from the cup under the screen): our own model
+  from numbers, not a game asset. I found no star-shaped goop monster in Sunshine by that description (closest: Proto
+  Piranha, Goobles, goop puddles); built in that spirit: a rounded five-point puddle 5.2 m tip to tip, 0.6 m high,
+  rippling outward (5 cm rings every 62 cm), ten breathing blobs, `Astra/Goop Shimmer` (`Assets/Astra/Shaders/goop-shimmer-20261027.shader`:
+  dark goop, oil-slick rainbow sheen, wet highlight, glints, shadow pass), on a flat white Glitter Cloud about 9.5 m
+  across with a walk slab at +0.38 m. Mesh `Assets/Astra/Meshes/goop-star-20261027.asset`, materials `goop-*-20261027.mat`.
+- **Editor crashes (4th one this round):** my menus called `AssetDatabase.SaveAssets()`, which rewrote and re-imported
+  every jelly render texture while their cameras drew; now only changed assets are saved (`SaveAssetIfDirty`). One
+  more crash followed editor photos; the photo camera now destroys its temporary render texture. Run photos (menu 11)
+  last, after the scene is saved.
+
+Desktop test 2026-10-27 17:14:11: fresh build, entered the world, no Udon errors. Not checked in the client: the dent
+with a body, the frame rate with five jellies, whether the cup floor shows through the star in VRChat (editor photos
+show the cube dark because the scene-behind camera only runs in VRChat), and the 0.38 m step onto the goop cloud.

@@ -433,7 +433,7 @@ public static class ClaudeJellyBed20261026
         cam.targetTexture = rt; cam.Render(); cam.Render(); RenderTexture.active = rt;
         var tex = new Texture2D(1200, 800, TextureFormat.RGB24, false); tex.ReadPixels(new Rect(0, 0, 1200, 800), 0, 0); tex.Apply();
         File.WriteAllBytes(Path.Combine(Out, name + ".png"), tex.EncodeToPNG());
-        cam.targetTexture = null; RenderTexture.active = null; rt.Release(); Object.DestroyImmediate(tex); Object.DestroyImmediate(go);
+        cam.targetTexture = null; RenderTexture.active = null; rt.Release(); Object.DestroyImmediate(rt); Object.DestroyImmediate(tex); Object.DestroyImmediate(go);
     }
 
     [MenuItem("Astra/Claude/Jelly bed 7 booth photos")]
@@ -471,7 +471,7 @@ public static class ClaudeJellyBed20261026
 
     class Shape
     {
-        public string name; public Color color, fog; public float clear, maxH; public bool soft; public Vector2 prefer;
+        public string name; public Color color, fog; public float clear, maxH, size = 1f; public bool soft; public Vector2 prefer;
         public System.Func<float, float, float> height; // x, y in -1..1 (y = the jelly's +z) -> 0..1 of the jelly's 1.3 m
     }
 
@@ -480,11 +480,11 @@ public static class ClaudeJellyBed20261026
         return new[] {
             new Shape { name = "star",   color = new Color(0.12f, 0.55f, 1f),   fog = new Color(0.35f, 0.75f, 1f, 0.22f), clear = 0.8f,  maxH = 0.7f,  prefer = Vector2.zero,
                         height = Flat((x, y) => Star(x, y, 0.97f, 0.47f)) },
-            new Shape { name = "heart",  color = new Color(1f, 0.22f, 0.66f), fog = new Color(1f, 0.45f, 0.75f, 0.25f),   clear = 0.8f,  maxH = 0.7f,  prefer = new Vector2(15f, 33f),
+            new Shape { name = "heart",  color = new Color(1f, 0.22f, 0.66f), fog = new Color(1f, 0.45f, 0.75f, 0.25f),   clear = 0.8f,  maxH = 0.7f,  prefer = new Vector2(-7.5f, -1.5f), size = 0.62f,
                         height = Flat((x, y) => { float a = x * 1.18f, b = y * 1.18f + 0.1f, q = a * a + b * b - 1; return q * q * q - a * a * b * b * b <= 0; }) },
-            new Shape { name = "moon",   color = new Color(0.62f, 0.42f, 1f),   fog = new Color(0.78f, 0.62f, 1f, 0.22f),  clear = 0.8f,  maxH = 0.65f, prefer = new Vector2(24f, 33f),
+            new Shape { name = "moon",   color = new Color(0.62f, 0.42f, 1f),   fog = new Color(0.78f, 0.62f, 1f, 0.22f),  clear = 0.8f,  maxH = 0.65f, prefer = new Vector2(7.5f, -1.5f), size = 0.62f,
                         height = Flat((x, y) => x * x + y * y <= 0.92f * 0.92f && x * x + (y - 0.42f) * (y - 0.42f) > 0.74f * 0.74f) },
-            new Shape { name = "flower", color = new Color(0.25f, 1f, 0.62f),   fog = new Color(0.55f, 1f, 0.78f, 0.22f),  clear = 0.8f,  maxH = 0.6f,  prefer = new Vector2(15f, 41f),
+            new Shape { name = "flower", color = new Color(0.25f, 1f, 0.62f),   fog = new Color(0.55f, 1f, 0.78f, 0.22f),  clear = 0.8f,  maxH = 0.6f,  prefer = new Vector2(0f, -8f), size = 0.62f,
                         height = Flat((x, y) => { float r = Mathf.Sqrt(x * x + y * y), t = Mathf.Atan2(x, y); return r <= 0.5f + 0.44f * Mathf.Sqrt(Mathf.Abs(Mathf.Cos(2.5f * t))); }) },
             new Shape { name = "cloud",  color = new Color(1f, 1f, 1f),         fog = new Color(1f, 1f, 1f, 0.92f),        clear = 0.06f, maxH = 1f,    prefer = new Vector2(24f, 41f), soft = true,
                         height = Spheres },
@@ -519,9 +519,11 @@ public static class ClaudeJellyBed20261026
         return Mathf.Clamp01(h);
     }
 
-    const int TexN = 512;
+    // 1024 = the jelly's own texture size (its surface normals are taken 1/1024 apart). Round 3 used 512 px, 8-bit heights
+    // with a hard 7 cm step at the outline, and those pixel stairs and 256 height levels showed as jagged edges and rings.
+    const int TexN = 1024;
 
-    // Mask (white = jelly) and height (black = tallest) images for one shape, as linear, uncompressed PNGs.
+    // Mask (white = jelly, PNG) and height (black = tallest, floating-point EXR) images for one shape.
     static (Texture2D mask, Texture2D height) ShapeTextures(Shape s, string dir)
     {
         var h = new float[TexN * TexN];
@@ -549,18 +551,63 @@ public static class ClaudeJellyBed20261026
                     if (i - sg >= 0 && i - sg < TexN && j + sg >= 0 && j + sg < TexN) best = Mathf.Min(best, d[idx + sg * TexN - sg] + 1.414f);
                     d[idx] = best;
                 }
-            float w = 0.2f * TexN / 2f;
+            // A rounded side like a jelly on a plate: a quarter circle, full height 0.18 in (about 45 cm). Its steep foot
+            // matters: a thin sliver at the outline was missed by every other ray step and showed as stairs.
+            float w = 0.18f * TexN / 2f;
             for (int k = 0; k < h.Length; k++) { float t = 1 - Mathf.Min(d[k] / w, 1); h[k] = d[k] > 0 ? Mathf.Sqrt(1 - t * t) : 0; }
         }
-        var mask = new Color32[h.Length]; var height = new Color32[h.Length];
+        // A soft blur (sigma 5 px, about 2.5 cm) melts the last pixel stairs and the creases between the cloud's spheres.
+        h = Blur(h, 5f);
+        var mask = new Color32[h.Length]; var height = new Color[h.Length];
         for (int k = 0; k < h.Length; k++)
         {
-            bool inside = h[k] > 0.04f;
-            mask[k] = inside ? new Color32(255, 255, 255, 255) : new Color32(0, 0, 0, 255);
-            byte v = (byte)Mathf.RoundToInt(255 * (1 - (inside ? Mathf.Max(h[k], 0.08f) : 0f) * s.maxH));
-            height[k] = new Color32(v, v, v, 255);
+            mask[k] = h[k] > 0.002f ? new Color32(255, 255, 255, 255) : new Color32(0, 0, 0, 255);
+            float v = 1 - Mathf.Clamp01(h[k]) * s.maxH;
+            height[k] = new Color(v, v, v, 1);
         }
-        return (SaveLinear(mask, dir + "jelly-" + s.name + "-mask" + Stamp + ".png"), SaveLinear(height, dir + "jelly-" + s.name + "-height" + Stamp + ".png"));
+        AssetDatabase.DeleteAsset(dir + "jelly-" + s.name + "-height" + Stamp + ".png"); // round 3's 8-bit version
+        return (SaveLinear(mask, dir + "jelly-" + s.name + "-mask" + Stamp + ".png"), SaveHeight(height, dir + "jelly-" + s.name + "-height" + Stamp + ".exr"));
+    }
+
+    static float[] Blur(float[] src, float sigma)
+    {
+        int r = Mathf.CeilToInt(sigma * 3);
+        var kern = Enumerable.Range(-r, 2 * r + 1).Select(i => Mathf.Exp(-i * i / (2 * sigma * sigma))).ToArray();
+        float sum = kern.Sum(); for (int i = 0; i < kern.Length; i++) kern[i] /= sum;
+        var tmp = new float[src.Length]; var dst = new float[src.Length];
+        for (int pass = 0; pass < 2; pass++)
+        {
+            var a = pass == 0 ? src : tmp; var b = pass == 0 ? tmp : dst;
+            for (int j = 0; j < TexN; j++)
+                for (int i = 0; i < TexN; i++)
+                {
+                    float acc = 0;
+                    for (int k = -r; k <= r; k++)
+                    {
+                        int x = pass == 0 ? Mathf.Clamp(i + k, 0, TexN - 1) : i, y = pass == 0 ? j : Mathf.Clamp(j + k, 0, TexN - 1);
+                        acc += a[y * TexN + x] * kern[k + r];
+                    }
+                    b[j * TexN + i] = acc;
+                }
+        }
+        return dst;
+    }
+
+    static Texture2D SaveHeight(Color[] px, string path)
+    {
+        var t = new Texture2D(TexN, TexN, TextureFormat.RGBAFloat, false, true);
+        t.SetPixels(px); t.Apply();
+        File.WriteAllBytes(path, t.EncodeToEXR(Texture2D.EXRFlags.OutputAsFloat)); Object.DestroyImmediate(t);
+        AssetDatabase.ImportAsset(path);
+        var ti = (TextureImporter)AssetImporter.GetAtPath(path);
+        ti.sRGBTexture = false; ti.mipmapEnabled = false; ti.wrapMode = TextureWrapMode.Clamp; ti.textureCompression = TextureImporterCompression.Uncompressed;
+        ti.maxTextureSize = TexN; ti.npotScale = TextureImporterNPOTScale.None;
+        // Stored as 16-bit (R16): Unity's default half floats are too coarse near 1.0, and the jelly reads its surface
+        // tilt from the height difference between neighbouring pixels, so the tops shaded in bands.
+        foreach (var plat in new[] { "Standalone", "Android" })
+            ti.SetPlatformTextureSettings(new TextureImporterPlatformSettings { name = plat, overridden = true, maxTextureSize = TexN, format = TextureImporterFormat.R16 });
+        ti.SaveAndReimport();
+        return AssetDatabase.LoadAssetAtPath<Texture2D>(path);
     }
 
     static Texture2D SaveLinear(Color32[] px, string path)
@@ -601,6 +648,7 @@ public static class ClaudeJellyBed20261026
         // Jelly wobble (the package's jelly numbers); the cloud is the pancake's slower, pillowy settle.
         dyn.SetFloat("_stiffness", s.soft ? 0.8f : 0.85f); dyn.SetFloat("_elasticity", 0.04f); dyn.SetFloat("_damping", s.soft ? 0.3f : 0.02f);
         var vol = (Material)map[AssetDatabase.LoadMainAssetAtPath(Chain[13])];
+        vol.shader = Shader.Find("Astra/Jelly Refraction (smooth)") ?? vol.shader; // 96 ray steps: no slice stripes
         vol.SetTexture("_MochiMask2", mask);
         vol.SetColor("_Color", s.color); vol.SetColor("_FogColor", s.fog); vol.SetFloat("_Transparency", s.clear);
         if (s.soft)
@@ -619,7 +667,9 @@ public static class ClaudeJellyBed20261026
             vol.SetFloat("_MatCapPower", 0.85f); vol.SetFloat("_Metallic", 0f); vol.SetFloat("_Glossiness", 0.55f);
         }
         EditorUtility.SetDirty(dyn); EditorUtility.SetDirty(vol);
-        AssetDatabase.SaveAssets();
+        // Save only what changed. AssetDatabase.SaveAssets also rewrote every jelly render texture, and re-importing those
+        // while their cameras draw is what crashed the editor (2026-10-27, three times).
+        foreach (var o in map.Values) AssetDatabase.SaveAssetIfDirty(o);
         return ((RenderTexture)map[AssetDatabase.LoadMainAssetAtPath(Chain[0])], vol);
     }
 
@@ -651,12 +701,15 @@ public static class ClaudeJellyBed20261026
 
         var old = GameObject.Find(ShapesRoot);
         if (old) Undo.DestroyObjectImmediate(old);
+        // The goop star (menu 13) is placed around the jellies, so it comes out first and goes back in after this.
+        var oldGoop = GameObject.Find(GoopRoot);
+        if (oldGoop) { Undo.DestroyObjectImmediate(oldGoop); rep.Add("- took the goop star out; run menu 13 to put it back around the jellies"); }
         var root = new GameObject(ShapesRoot); Undo.RegisterCreatedObjectUndo(root, "Jelly shapes");
         var frame = deck.transform; var n = frame.forward; // +z points away from the screen
         var moving = MovingRenderers();
         Physics.SyncTransforms();
         var fixedR = Object.FindObjectsOfType<MeshRenderer>().Where(r => r.enabled && r.bounds.size.magnitude < 150f && !r.transform.IsChildOf(bed.transform)).Select(r => r.bounds).ToList();
-        var placed = new List<Vector3> { frame.position };
+        var placed = new List<Vector3> { new Vector3(frame.position.x, 3.6f, frame.position.z) }; // y = keep-out radius
 
         foreach (var s in Shapes())
         {
@@ -670,21 +723,26 @@ public static class ClaudeJellyBed20261026
             if (s.name == "star") { j = jelly; at = bed.transform; }
             else
             {
-                // Somewhere clear on the ground behind or beside the cup, not between it and the screen, 7.5 m from the others.
+                // Round 4 (Astra: "move the jellies to the cinema"): the small ones (0.62 = 3.1 m) go beside and in front of
+                // the cup (the screen is 15 m up, so the ground under it is free to use); the cloud stays past the pole.
+                // Nearest clear ground to the wished spot, keeping a metre and a half between jellies (the cup counts 3.6 m).
+                float half = Half * s.size, sz = 1f;
                 Vector3 want = frame.TransformPoint(new Vector3(s.prefer.x, 0, s.prefer.y)), best = Vector3.zero; float bestD = float.MaxValue;
-                for (float dx = -12; dx <= 12; dx += 1f)
-                    for (float dz = -12; dz <= 12; dz += 1f)
+                for (float dx = -12; dx <= 12; dx += 0.5f)
+                    for (float dz = -12; dz <= 12; dz += 0.5f)
                     {
                         var p = want + new Vector3(dx, 0, dz); p.y = frame.position.y;
                         float dd = new Vector2(dx, dz).magnitude;
-                        if (dd >= bestD || frame.InverseTransformPoint(p).z < -1f || placed.Any(q => Vector3.Distance(q, p) < 7f)) continue;
+                        if (dd >= bestD || placed.Any(q => Vector3.Distance(new Vector3(q.x, p.y, q.z), p) < q.y + half + 1.5f)) continue;
                         if (!Physics.Raycast(p + Vector3.up * 2, Vector3.down, out var g, 4, ~0, QueryTriggerInteraction.Ignore) || Mathf.Abs(g.point.y - p.y) > 0.3f) continue;
-                        if (Clear(p, moving, fixedR)) { best = p; bestD = dd; }
+                        if (Clear(p, moving, fixedR, half)) { best = p; bestD = dd; }
                     }
+                sz = s.size;
                 if (bestD == float.MaxValue) { rep.Add("- " + s.name + ": FAIL no clear ground near " + want.ToString("0.0")); continue; }
-                placed.Add(best);
+                placed.Add(new Vector3(best.x, half, best.z));
                 var holder = new GameObject("Jelly " + s.name); holder.transform.SetParent(root.transform, false);
-                holder.transform.SetPositionAndRotation(best, Quaternion.LookRotation(-n) * Quaternion.Euler(0, (s.prefer.x > 0 ? 1 : -1) * 18f, 0));
+                holder.transform.SetPositionAndRotation(best, Quaternion.LookRotation(-n) * Quaternion.Euler(0, (s.prefer.x > 0 ? 1 : s.prefer.x < 0 ? -1 : 0) * 18f, 0));
+                holder.transform.localScale = Vector3.one * sz;
                 j = Object.Instantiate(jelly, holder.transform); j.name = "MochiMochiJelly";
                 j.transform.localPosition = Vector3.zero; j.transform.localRotation = Quaternion.identity;
                 // Shared scene-behind cameras: only the star's draw. These stay as head-followers for the matrices their script sets.
@@ -695,6 +753,8 @@ public static class ClaudeJellyBed20261026
             }
             var dent = j.GetComponentsInChildren<Camera>(true).First(c => c.name == "Camera");
             Undo.RecordObject(dent, "Jelly dent"); dent.targetTexture = dentRT;
+            // A smaller jelly needs its dent camera's view scaled with it (the package's resize steps).
+            dent.orthographicSize = Half * s.size; dent.farClipPlane = Tall * s.size;
             var cube = j.transform.Find("Cube").GetComponent<MeshRenderer>();
             Undo.RecordObject(cube, "Jelly material"); cube.sharedMaterial = vol;
             if (s.name == "star") rep.Add("- star: the cup's jelly, its own chain in `" + dir + "`");
@@ -708,7 +768,7 @@ public static class ClaudeJellyBed20261026
         rep.Add("- opaque shaders near the deck still without a depth pass: " + (noDepth.Count == 0 ? "none" : string.Join(", ", noDepth)));
 
         UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(root.scene);
-        AssetDatabase.SaveAssets();
+        AssetDatabase.SaveAssetIfDirty(floorMat);
         Write(rep, "shapes.md");
     }
 
@@ -787,7 +847,7 @@ public static class ClaudeJellyBed20261026
         var swapped = new List<(Material m, Texture was)>();
         foreach (var m in Object.FindObjectsOfType<MeshRenderer>().Where(r => r.name == "Cube").Select(r => r.sharedMaterial).Where(m => m && m.HasProperty("_MochiMask")).Distinct())
         {
-            var hp = AssetDatabase.GetAssetPath(m).Replace("-mochivolume-", "-height-").Replace(".mat", ".png");
+            var hp = AssetDatabase.GetAssetPath(m).Replace("-mochivolume-", "-height-").Replace(".mat", ".exr");
             var h = AssetDatabase.LoadAssetAtPath<Texture2D>(hp);
             if (h) { swapped.Add((m, m.GetTexture("_MochiMask"))); m.SetTexture("_MochiMask", h); }
         }
@@ -806,7 +866,172 @@ public static class ClaudeJellyBed20261026
         ShotFrom("round3-star-top", o, o + Vector3.up * 9 - n * 0.5f);
         if (root)
             foreach (Transform t in root.transform)
-                ShotFrom("round3-" + t.name.ToLower().Replace(' ', '-'), t.position + Vector3.up * 0.5f, t.position + (Quaternion.Euler(0, 30, 0) * (t.position - o).normalized) * 6.5f + Vector3.up * 4f);
+                ShotFrom("round3-" + t.name.ToLower().Replace(' ', '-'), t.position + Vector3.up * 0.5f, t.position + (Quaternion.Euler(0, 30, 0) * (t.position - o).normalized) * 6.5f * t.localScale.x + Vector3.up * 4f * t.localScale.x);
+        var goop = GameObject.Find(GoopRoot);
+        if (goop)
+        {
+            var g = goop.transform.position + Vector3.up * 0.5f;
+            ShotFrom("round4-goop-close", g, g - goop.transform.forward * 6.5f + goop.transform.right * 2.5f + Vector3.up * 3.5f);
+            ShotFrom("round4-goop-top", g, g + Vector3.up * 10f - goop.transform.forward * 1f);
+            ShotFrom("round4-goop-and-cup", Vector3.Lerp(g, o, 0.5f), Vector3.Lerp(g, o, 0.5f) - n * 14f + Vector3.up * 9f);
+        }
+    }
+
+    // Round 4 (Astra, 2026-10-27): "model the goop monster from Super Mario Sunshine ... he's a big star kind of, and he
+    // ripples", "that shimmery material", "a little extra blobs around it", "on like a flat white cloud", by the cinema.
+    // Our own goop star, built here from numbers (no game model): a rounded five-point puddle 5.2 m tip to tip and 0.6 m
+    // high in the middle, rippling outward, with ten breathing blobs around it, all in Astra/Goop Shimmer (dark goop, an
+    // oil-slick rainbow sheen, a wet highlight), lying on a flat white Glitter Cloud about 9.5 m across.
+    const string GoopRoot = "Goop star on a white cloud (Claude)";
+    const float GoopCloudR = 4.7f, GoopTop = 0.38f;
+
+    [MenuItem("Astra/Claude/Jelly bed 13 goop star")]
+    public static void GoopStar()
+    {
+        Directory.CreateDirectory(Out);
+        var rep = new List<string> { "# Goop star " + System.DateTime.Now.ToString("yyyy-MM-dd HH:mm"), "" };
+        var deck = GameObject.Find(CinemaRoot);
+        var shader = Shader.Find("Astra/Goop Shimmer"); var cloudShader = Shader.Find("Astra/Glitter Cloud");
+        if (!deck || !shader || !cloudShader) { rep.Add("FAIL: missing " + (deck ? "" : "deck ") + (shader ? "" : "Goop Shimmer ") + (cloudShader ? "" : "Glitter Cloud")); Write(rep, "goop.md"); return; }
+        var old = GameObject.Find(GoopRoot);
+        if (old) Undo.DestroyObjectImmediate(old);
+
+        // Nearest clear ground to a spot beside the cup on the screen side (jellies count as obstacles).
+        Physics.SyncTransforms();
+        var moving = MovingRenderers();
+        var fixedR = Object.FindObjectsOfType<MeshRenderer>().Where(r => r.enabled && r.bounds.size.magnitude < 150f).Select(r => r.bounds).ToList();
+        var f = deck.transform;
+        Vector3 want = f.TransformPoint(new Vector3(11f, 0, -9f)), best = Vector3.zero; float bestD = float.MaxValue;
+        for (float dx = -18; dx <= 18; dx += 0.5f)
+            for (float dz = -18; dz <= 18; dz += 0.5f)
+            {
+                var p = want + new Vector3(dx, 0, dz); p.y = f.position.y;
+                float dd = new Vector2(dx, dz).magnitude;
+                if (dd >= bestD) continue;
+                if (!Physics.Raycast(p + Vector3.up * 2, Vector3.down, out var g, 4, ~0, QueryTriggerInteraction.Ignore) || Mathf.Abs(g.point.y - p.y) > 0.3f) continue;
+                if (GoopClear(p, moving, fixedR)) { best = p; bestD = dd; }
+            }
+        if (bestD == float.MaxValue) { rep.Add("FAIL: no clear 10 m spot within 18 m of " + want.ToString("0.0")); Write(rep, "goop.md"); return; }
+        int swallowed = fixedR.Count(r => r.Intersects(new Bounds(best + Vector3.up * 0.45f, new Vector3(GoopCloudR * 2, 0.9f, GoopCloudR * 2))));
+
+        var root = new GameObject(GoopRoot); Undo.RegisterCreatedObjectUndo(root, "Goop star");
+        root.transform.SetPositionAndRotation(best, Quaternion.LookRotation(-f.forward)); // a point toward the screen
+        rep.Add("- at " + best.ToString("0.0") + ", " + Vector3.Distance(best, f.position).ToString("0.0") + " m from the cup; " + swallowed + " low ground pieces (under 0.9 m) end up inside the white cloud");
+
+        var goopMat = GoopMaterial("Assets/Astra/Materials/goop-star-20261027.mat", shader);
+        goopMat.SetFloat("_Blob", 0); goopMat.SetFloat("_RippleAmp", 0.05f); goopMat.SetFloat("_RippleFreq", 1.6f); goopMat.SetFloat("_RippleSpeed", 2.2f);
+        var blobMat = GoopMaterial("Assets/Astra/Materials/goop-blob-20261027.mat", shader);
+        blobMat.SetFloat("_Blob", 1);
+        var white = GoopMaterial("Assets/Astra/Materials/goop-cloud-white-20261027.mat", cloudShader);
+        white.SetColor("_Top", new Color(1f, 0.98f, 1f)); white.SetColor("_Bottom", new Color(0.9f, 0.88f, 0.95f));
+        white.SetColor("_Rim", new Color(1.3f, 1.25f, 1.4f)); white.SetFloat("_Pastel", 0.04f);
+        foreach (var m in new[] { goopMat, blobMat, white }) EditorUtility.SetDirty(m);
+
+        // The flat white cloud: one wide squashed puff with eleven lumps around its edge; one thin walk slab on top.
+        var sphere = Resources.GetBuiltinResource<Mesh>("Sphere.fbx");
+        var rnd = new System.Random(20261027);
+        var cloud = new GameObject("Flat white cloud"); cloud.transform.SetParent(root.transform, false);
+        void Puff(Vector3 at, Vector3 size)
+        {
+            var go = new GameObject("Cloud puff"); go.transform.SetParent(cloud.transform, false);
+            go.transform.localPosition = at; go.transform.localScale = size;
+            go.AddComponent<MeshFilter>().sharedMesh = sphere; go.AddComponent<MeshRenderer>().sharedMaterial = white;
+        }
+        Puff(new Vector3(0, 0.03f, 0), new Vector3(7.6f, 0.7f, 7.6f));
+        for (int i = 0; i < 11; i++)
+        {
+            float a = (i * 360f / 11f + (float)rnd.NextDouble() * 14f) * Mathf.Deg2Rad, d = 3.3f + (float)rnd.NextDouble() * 0.5f, r = 1.15f + (float)rnd.NextDouble() * 0.5f;
+            Puff(new Vector3(Mathf.Sin(a) * d, 0.03f, Mathf.Cos(a) * d), new Vector3(r * 2, 0.55f + (float)rnd.NextDouble() * 0.2f, r * 2));
+        }
+        var slab = cloud.AddComponent<BoxCollider>(); slab.center = new Vector3(0, GoopTop - 0.03f, 0); slab.size = new Vector3(6.2f, 0.06f, 6.2f);
+
+        // The goop star itself, its rim tucked 2 cm into the cloud.
+        var star = new GameObject("Goop star"); star.transform.SetParent(root.transform, false);
+        star.transform.localPosition = new Vector3(0, GoopTop - 0.02f, 0);
+        star.AddComponent<MeshFilter>().sharedMesh = GoopMesh();
+        star.AddComponent<MeshRenderer>().sharedMaterial = goopMat;
+
+        // Ten blobs around it: at the tips and in the dips between them, half sunk, each breathing on its own beat.
+        var blobs = new GameObject("Goop blobs"); blobs.transform.SetParent(root.transform, false);
+        for (int i = 0; i < 10; i++)
+        {
+            float a = (i * 36f + (float)rnd.NextDouble() * 12f - 6f) * Mathf.Deg2Rad;
+            float d = GoopOutline(a) + 0.25f + (float)rnd.NextDouble() * 0.5f, r = 0.16f + (float)rnd.NextDouble() * 0.26f;
+            var b = GameObject.CreatePrimitive(PrimitiveType.Sphere); Object.DestroyImmediate(b.GetComponent<Collider>());
+            b.name = "Goop blob " + (i + 1); b.transform.SetParent(blobs.transform, false);
+            b.transform.localPosition = new Vector3(Mathf.Sin(a) * d, GoopTop + r * 0.3f, Mathf.Cos(a) * d);
+            b.transform.localScale = new Vector3(r * 2, r * 1.6f, r * 2);
+            b.GetComponent<MeshRenderer>().sharedMaterial = blobMat;
+        }
+        rep.Add("- goop star 5.2 m tip to tip, 0.6 m high, ripples 5 cm high every 62 cm; 10 blobs 0.3-0.8 m; cloud about 9.5 m across, walk slab top y +" + GoopTop + " m");
+
+        UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(root.scene);
+        foreach (var m in new[] { goopMat, blobMat, white }) AssetDatabase.SaveAssetIfDirty(m);
+        Write(rep, "goop.md");
+    }
+
+    // Like Clear, but the flat white cloud may swallow low ground clouds: only things reaching above 0.9 m count, and the
+    // area must still be free of the moving clouds and of other jellies.
+    static bool GoopClear(Vector3 p, List<Bounds> moving, List<Bounds> fixedR)
+    {
+        var box = new Bounds(p + Vector3.up * 1.6f, new Vector3(GoopCloudR * 2, 1.4f, GoopCloudR * 2));
+        if (Physics.OverlapBox(box.center, box.extents, Quaternion.identity, ~0, QueryTriggerInteraction.Ignore).Length > 0) return false;
+        foreach (var r in fixedR) if (r.Intersects(box)) return false;
+        var jellies = GameObject.Find(ShapesRoot);
+        if (jellies && jellies.GetComponentsInChildren<Renderer>().Any(r => Vector3.Distance(Vector3.Scale(r.bounds.center, new Vector3(1, 0, 1)), Vector3.Scale(p, new Vector3(1, 0, 1))) < GoopCloudR + r.bounds.extents.x + 0.5f)) return false;
+        var cup = GameObject.Find(CinemaRoot);
+        if (cup && Vector2.Distance(new Vector2(cup.transform.position.x, cup.transform.position.z), new Vector2(p.x, p.z)) < GoopCloudR + 3.6f + 0.5f) return false;
+        return MovingClear(p, moving);
+    }
+
+    static bool MovingClear(Vector3 p, List<Bounds> moving)
+    {
+        float rad = new Vector2(p.x, p.z).magnitude;
+        return !moving.Any(m => Mathf.Abs(new Vector2(m.center.x, m.center.z).magnitude - rad) < Mathf.Max(m.extents.x, m.extents.z) + GoopCloudR && m.max.y > p.y + 0.4f && m.min.y < p.y + 3f);
+    }
+
+    static Material GoopMaterial(string path, Shader sh)
+    {
+        var m = AssetDatabase.LoadAssetAtPath<Material>(path);
+        if (!m) { m = new Material(sh) { enableInstancing = true }; AssetDatabase.CreateAsset(m, path); }
+        m.shader = sh;
+        return m;
+    }
+
+    // The star's outline radius (metres) at angle a from +z: rounded tips at 2.6 m, soft dips at 1.5 m (chunky arms).
+    static float GoopOutline(float a) => 1.5f + 1.1f * Mathf.Pow(0.5f + 0.5f * Mathf.Cos(5 * a), 1.15f);
+
+    static Mesh GoopMesh()
+    {
+        const string path = "Assets/Astra/Meshes/goop-star-20261027.asset";
+        const int A = 240, R = 36; const float H = 0.6f;
+        var v = new List<Vector3> { new Vector3(0, H, 0) }; var c = new List<Color> { Color.white }; var t = new List<int>();
+        for (int k = 1; k <= R; k++)
+        {
+            float rho = k / (float)R;
+            for (int i = 0; i < A; i++)
+            {
+                float a = i * Mathf.PI * 2 / A, rr = GoopOutline(a), dEdge = (1 - rho) * rr, u = Mathf.Min(dEdge / 0.85f, 1);
+                float h = H * (1 - Mathf.Pow(1 - u, 2.5f)) * (0.72f + 0.28f * (1 - rho * rho));
+                v.Add(new Vector3(Mathf.Sin(a) * rho * rr, h, Mathf.Cos(a) * rho * rr));
+                c.Add(new Color(Mathf.Min(1, dEdge / 0.35f), 0, 0, 1)); // how much this vertex ripples: none on the rim
+            }
+        }
+        for (int i = 0; i < A; i++) { t.Add(0); t.Add(1 + i); t.Add(1 + (i + 1) % A); }
+        for (int k = 1; k < R; k++)
+            for (int i = 0; i < A; i++)
+            {
+                int a0 = 1 + (k - 1) * A + i, a1 = 1 + (k - 1) * A + (i + 1) % A, b0 = a0 + A, b1 = a1 + A;
+                t.AddRange(new[] { a0, b0, a1, a1, b0, b1 });
+            }
+        var mesh = new Mesh { name = "goop-star-20261027" };
+        mesh.SetVertices(v); mesh.SetColors(c); mesh.SetTriangles(t, 0);
+        mesh.RecalculateNormals(); mesh.RecalculateBounds();
+        var b = mesh.bounds; b.Expand(0.2f); mesh.bounds = b; // room for the ripple
+        Directory.CreateDirectory("Assets/Astra/Meshes");
+        if (AssetDatabase.LoadAssetAtPath<Mesh>(path)) AssetDatabase.DeleteAsset(path);
+        AssetDatabase.CreateAsset(mesh, path);
+        return mesh;
     }
 
     static void Write(List<string> rep, string file) => File.WriteAllText(Path.Combine(Out, file), string.Join("\n", rep) + "\n");
@@ -891,15 +1116,15 @@ public static class ClaudeJellyBed20261026
     }
 
     // No collider and no fixed renderer inside the bed's space (with half a metre to spare), and no orbiting cloud's path through it.
-    static bool Clear(Vector3 p, List<Bounds> moving, List<Bounds> fixedR)
+    static bool Clear(Vector3 p, List<Bounds> moving, List<Bounds> fixedR, float half = Half)
     {
-        var box = new Bounds(p + Vector3.up * 1.2f, new Vector3(Half * 2 + 1, 2.2f, Half * 2 + 1));
+        var box = new Bounds(p + Vector3.up * 1.2f, new Vector3(half * 2 + 1, 2.2f, half * 2 + 1));
         if (Physics.OverlapBox(box.center, box.extents, Quaternion.identity, ~0, QueryTriggerInteraction.Ignore).Length > 0) return false;
         foreach (var r in fixedR) if (r.Intersects(box)) return false;
         float rad = new Vector2(p.x, p.z).magnitude;
         foreach (var m in moving)
         {
-            float mr = new Vector2(m.center.x, m.center.z).magnitude, reach = Mathf.Max(m.extents.x, m.extents.z) + Half + 0.5f;
+            float mr = new Vector2(m.center.x, m.center.z).magnitude, reach = Mathf.Max(m.extents.x, m.extents.z) + half + 0.5f;
             if (Mathf.Abs(mr - rad) < reach && m.max.y > box.min.y && m.min.y < box.max.y) return false;
         }
         return true;
@@ -957,7 +1182,7 @@ public static class ClaudeJellyBed20261026
         cam.targetTexture = rt; cam.Render(); cam.Render(); RenderTexture.active = rt;
         var tex = new Texture2D(1200, 800, TextureFormat.RGB24, false); tex.ReadPixels(new Rect(0, 0, 1200, 800), 0, 0); tex.Apply();
         File.WriteAllBytes(Path.Combine(Out, name + ".png"), tex.EncodeToPNG());
-        cam.targetTexture = null; RenderTexture.active = null; rt.Release(); Object.DestroyImmediate(tex); Object.DestroyImmediate(go);
+        cam.targetTexture = null; RenderTexture.active = null; rt.Release(); Object.DestroyImmediate(rt); Object.DestroyImmediate(tex); Object.DestroyImmediate(go);
     }
 
     static string PathOf(Transform t) => t.parent ? PathOf(t.parent) + "/" + t.name : t.name;
