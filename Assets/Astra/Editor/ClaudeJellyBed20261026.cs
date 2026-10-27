@@ -426,8 +426,7 @@ public static class ClaudeJellyBed20261026
     static void ShotFrom(string name, Vector3 target, Vector3 from)
     {
         var go = new GameObject("Claude photo camera") { hideFlags = HideFlags.DontSave };
-        var cam = go.AddComponent<Camera>(); cam.transform.position = from; cam.transform.LookAt(target); cam.fieldOfView = 55; cam.allowHDR = true; cam.nearClipPlane = .02f; cam.farClipPlane = 3000;
-        var pp = go.AddComponent<UnityEngine.Rendering.PostProcessing.PostProcessLayer>();
+        var cam = go.AddComponent<Camera>(); cam.transform.position = from; cam.transform.LookAt(target); cam.fieldOfView = 55; cam.allowHDR = true; cam.nearClipPlane = .02f; cam.farClipPlane = 3000;        var pp = go.AddComponent<UnityEngine.Rendering.PostProcessing.PostProcessLayer>();
         pp.Init(AssetDatabase.LoadAssetAtPath<UnityEngine.Rendering.PostProcessing.PostProcessResources>("Packages/com.unity.postprocessing/PostProcessing/PostProcessResources.asset"));
         pp.volumeLayer = ~0; pp.volumeTrigger = go.transform;
         var rt = new RenderTexture(1200, 800, 24, RenderTextureFormat.ARGBHalf) { antiAliasing = 4 };
@@ -448,6 +447,366 @@ public static class ClaudeJellyBed20261026
             foreach (var a in new[] { 0f, 120f, 240f })
                 ShotFrom("round2-booth" + k + "-" + a, c, c + Quaternion.Euler(0, a, 0) * r.transform.forward * 3.2f + Vector3.up * 0.6f);
         }
+    }
+
+    // Round 3 (Astra, 2026-10-27): "get rid of the rainbow chairs", the jelly showed through the clouds in front of it,
+    // "first lets try the shape of a star", "can we do more than one in a world? give a bunch of different ones", and a
+    // white standalone cloud jelly made of spheres.
+    // The package says its prefabs can't share a world because every jelly reads the same render textures. Here each jelly
+    // gets its own copy of the dent chain (mask camera texture, six custom render textures and their materials, and its own
+    // jelly material) under Assets/Astra/Jelly/jelly-<shape>-20261027/. The two head cameras that draw the scene behind the
+    // jelly stay shared: only the star's are switched on, the others reuse the same textures.
+    // The shape is the package's own Mask (white = jelly) on both materials, and a Height map (black = tallest) gives the
+    // rest shape: a rounded pillow for the flat shapes, a heap of sphere domes for the cloud.
+    const string ShapesRoot = "Jelly shapes (Claude)", JellyDir = "Assets/Astra/Jelly/", Stamp = "-20261027";
+    static readonly string[] Chain = {
+        "Assets/DynamicMochiMochi/source/DynamiMochiMask.renderTexture",
+        "Assets/DynamicMochiMochi/source/CRT1.asset", "Assets/DynamicMochiMochi/source/CRTCombine.asset",
+        "Assets/DynamicMochiMochi/source/CRTMaxX.asset", "Assets/DynamicMochiMochi/source/CRTMaxY.asset",
+        "Assets/DynamicMochiMochi/source/CRTBlurX.asset", "Assets/DynamicMochiMochi/source/CRTBlurY.asset",
+        "Assets/DynamicMochiMochi/MochiMochiDynamicMat.mat", "Assets/DynamicMochiMochi/source/MochiCombine.mat",
+        "Assets/DynamicMochiMochi/source/MochiMaxX.mat", "Assets/DynamicMochiMochi/source/MochiMaxY.mat",
+        "Assets/DynamicMochiMochi/source/MochiBlurX.mat", "Assets/DynamicMochiMochi/source/MochiBlurY.mat",
+        "Assets/DynamicMochiMochi/MochiVolume.mat" };
+
+    class Shape
+    {
+        public string name; public Color color, fog; public float clear, maxH; public bool soft; public Vector2 prefer;
+        public System.Func<float, float, float> height; // x, y in -1..1 (y = the jelly's +z) -> 0..1 of the jelly's 1.3 m
+    }
+
+    static Shape[] Shapes()
+    {
+        return new[] {
+            new Shape { name = "star",   color = new Color(0.12f, 0.55f, 1f),   fog = new Color(0.35f, 0.75f, 1f, 0.22f), clear = 0.8f,  maxH = 0.7f,  prefer = Vector2.zero,
+                        height = Flat((x, y) => Star(x, y, 0.97f, 0.47f)) },
+            new Shape { name = "heart",  color = new Color(1f, 0.22f, 0.66f), fog = new Color(1f, 0.45f, 0.75f, 0.25f),   clear = 0.8f,  maxH = 0.7f,  prefer = new Vector2(15f, 33f),
+                        height = Flat((x, y) => { float a = x * 1.18f, b = y * 1.18f + 0.1f, q = a * a + b * b - 1; return q * q * q - a * a * b * b * b <= 0; }) },
+            new Shape { name = "moon",   color = new Color(0.62f, 0.42f, 1f),   fog = new Color(0.78f, 0.62f, 1f, 0.22f),  clear = 0.8f,  maxH = 0.65f, prefer = new Vector2(24f, 33f),
+                        height = Flat((x, y) => x * x + y * y <= 0.92f * 0.92f && x * x + (y - 0.42f) * (y - 0.42f) > 0.74f * 0.74f) },
+            new Shape { name = "flower", color = new Color(0.25f, 1f, 0.62f),   fog = new Color(0.55f, 1f, 0.78f, 0.22f),  clear = 0.8f,  maxH = 0.6f,  prefer = new Vector2(15f, 41f),
+                        height = Flat((x, y) => { float r = Mathf.Sqrt(x * x + y * y), t = Mathf.Atan2(x, y); return r <= 0.5f + 0.44f * Mathf.Sqrt(Mathf.Abs(Mathf.Cos(2.5f * t))); }) },
+            new Shape { name = "cloud",  color = new Color(1f, 1f, 1f),         fog = new Color(1f, 1f, 1f, 0.92f),        clear = 0.06f, maxH = 1f,    prefer = new Vector2(24f, 41f), soft = true,
+                        height = Spheres },
+        };
+    }
+
+    // A five-point star with one point toward +y (mirror-symmetric in x, which the package's mirrored lookup needs).
+    static bool Star(float x, float y, float outer, float inner)
+    {
+        var pts = new Vector2[10];
+        for (int i = 0; i < 10; i++) { float a = Mathf.PI / 2 + i * Mathf.PI / 5, r = i % 2 == 0 ? outer : inner; pts[i] = new Vector2(Mathf.Cos(a) * r, Mathf.Sin(a) * r * 1.03f - 0.03f); }
+        bool c = false;
+        for (int i = 0, j = 9; i < 10; j = i++)
+            if ((pts[i].y > y) != (pts[j].y > y) && x < (pts[j].x - pts[i].x) * (y - pts[i].y) / (pts[j].y - pts[i].y) + pts[i].x) c = !c;
+        return c;
+    }
+
+    // Marks "inside" for the distance pass in Heights(); the real pillow is made there from the distance to the edge.
+    static System.Func<float, float, float> Flat(System.Func<float, float, bool> inside) => (x, y) => inside(x, y) ? -1f : 0f;
+
+    // The white cloud: sphere domes, mirrored left/right; the height is the tallest sphere over each point.
+    static float Spheres(float x, float y)
+    {
+        var balls = new[] { (0f, 0.02f, 0.5f, 0.15f), (0.47f, -0.12f, 0.4f, 0.05f), (0.8f, -0.3f, 0.2f, 0f), (0.25f, 0.4f, 0.36f, 0.08f),
+                            (0.55f, 0.28f, 0.26f, 0f), (0f, -0.45f, 0.34f, -0.02f), (0.4f, -0.5f, 0.26f, -0.04f) };
+        float h = 0, ax = Mathf.Abs(x);
+        foreach (var (cx, cy, r, lift) in balls)
+        {
+            float d2 = (ax - cx) * (ax - cx) + (y - cy) * (y - cy);
+            if (d2 < r * r) h = Mathf.Max(h, (Mathf.Sqrt(r * r - d2) / 0.5f) * 0.82f + lift);
+        }
+        return Mathf.Clamp01(h);
+    }
+
+    const int TexN = 512;
+
+    // Mask (white = jelly) and height (black = tallest) images for one shape, as linear, uncompressed PNGs.
+    static (Texture2D mask, Texture2D height) ShapeTextures(Shape s, string dir)
+    {
+        var h = new float[TexN * TexN];
+        bool flat = false;
+        for (int j = 0; j < TexN; j++)
+            for (int i = 0; i < TexN; i++)
+            {
+                float x = (i + 0.5f) / TexN * 2 - 1, y = (j + 0.5f) / TexN * 2 - 1;
+                h[j * TexN + i] = s.height(x, y);
+                if (h[j * TexN + i] < 0) flat = true;
+            }
+        if (flat)
+        {
+            // Chamfer distance to the outside, then a quarter-circle edge 0.2 wide (about half a metre on a 5 m jelly).
+            var d = h.Select(v => v < 0 ? 1e6f : 0f).ToArray();
+            for (int pass = 0; pass < 2; pass++)
+                for (int k = 0; k < TexN * TexN; k++)
+                {
+                    int idx = pass == 0 ? k : TexN * TexN - 1 - k, i = idx % TexN, j = idx / TexN, sg = pass == 0 ? -1 : 1;
+                    if (d[idx] == 0) continue;
+                    float best = d[idx];
+                    if (i + sg >= 0 && i + sg < TexN) best = Mathf.Min(best, d[idx + sg] + 1);
+                    if (j + sg >= 0 && j + sg < TexN) best = Mathf.Min(best, d[idx + sg * TexN] + 1);
+                    if (i + sg >= 0 && i + sg < TexN && j + sg >= 0 && j + sg < TexN) best = Mathf.Min(best, d[idx + sg * TexN + sg] + 1.414f);
+                    if (i - sg >= 0 && i - sg < TexN && j + sg >= 0 && j + sg < TexN) best = Mathf.Min(best, d[idx + sg * TexN - sg] + 1.414f);
+                    d[idx] = best;
+                }
+            float w = 0.2f * TexN / 2f;
+            for (int k = 0; k < h.Length; k++) { float t = 1 - Mathf.Min(d[k] / w, 1); h[k] = d[k] > 0 ? Mathf.Sqrt(1 - t * t) : 0; }
+        }
+        var mask = new Color32[h.Length]; var height = new Color32[h.Length];
+        for (int k = 0; k < h.Length; k++)
+        {
+            bool inside = h[k] > 0.04f;
+            mask[k] = inside ? new Color32(255, 255, 255, 255) : new Color32(0, 0, 0, 255);
+            byte v = (byte)Mathf.RoundToInt(255 * (1 - (inside ? Mathf.Max(h[k], 0.08f) : 0f) * s.maxH));
+            height[k] = new Color32(v, v, v, 255);
+        }
+        return (SaveLinear(mask, dir + "jelly-" + s.name + "-mask" + Stamp + ".png"), SaveLinear(height, dir + "jelly-" + s.name + "-height" + Stamp + ".png"));
+    }
+
+    static Texture2D SaveLinear(Color32[] px, string path)
+    {
+        var t = new Texture2D(TexN, TexN, TextureFormat.RGBA32, false, true);
+        t.SetPixels32(px); t.Apply();
+        File.WriteAllBytes(path, t.EncodeToPNG()); Object.DestroyImmediate(t);
+        AssetDatabase.ImportAsset(path);
+        var ti = (TextureImporter)AssetImporter.GetAtPath(path);
+        ti.sRGBTexture = false; ti.mipmapEnabled = false; ti.wrapMode = TextureWrapMode.Clamp; ti.textureCompression = TextureImporterCompression.Uncompressed;
+        ti.maxTextureSize = TexN; ti.npotScale = TextureImporterNPOTScale.None; ti.alphaSource = TextureImporterAlphaSource.None;
+        ti.SaveAndReimport();
+        return AssetDatabase.LoadAssetAtPath<Texture2D>(path);
+    }
+
+    // Copies the dent chain for one shape (once) and points every copy at the other copies.
+    // Existing copies are reused: deleting and re-importing a render texture a camera is drawing into crashed the editor
+    // twice (2026-10-27, Camera::SetRenderTargetAndViewport during a repaint).
+    static (RenderTexture dentRT, Material volume) CopyChain(Shape s, string dir, Texture2D mask, Texture2D height, List<string> rep)
+    {
+        var map = new Dictionary<Object, Object>();
+        foreach (var src in Chain)
+        {
+            var dst = dir + "jelly-" + s.name + "-" + Path.GetFileNameWithoutExtension(src).ToLower() + Stamp + Path.GetExtension(src);
+            if (!AssetDatabase.LoadMainAssetAtPath(dst) && !AssetDatabase.CopyAsset(src, dst)) { rep.Add("FAIL: could not copy " + src); return (null, null); }
+            map[AssetDatabase.LoadMainAssetAtPath(src)] = AssetDatabase.LoadMainAssetAtPath(dst);
+        }
+        foreach (var copy in map.Values)
+        {
+            var so = new SerializedObject(copy); var it = so.GetIterator(); bool changed = false;
+            while (it.Next(true))
+                if (it.propertyType == SerializedPropertyType.ObjectReference && it.objectReferenceValue && map.TryGetValue(it.objectReferenceValue, out var mine))
+                { it.objectReferenceValue = mine; changed = true; }
+            if (changed) { so.ApplyModifiedPropertiesWithoutUndo(); EditorUtility.SetDirty(copy); }
+        }
+        var dyn = (Material)map[AssetDatabase.LoadMainAssetAtPath(Chain[7])];
+        dyn.SetTexture("_MaskTex", mask); dyn.SetTexture("_HeightTex", height); dyn.SetFloat("_max_height", 1f);
+        // Jelly wobble (the package's jelly numbers); the cloud is the pancake's slower, pillowy settle.
+        dyn.SetFloat("_stiffness", s.soft ? 0.8f : 0.85f); dyn.SetFloat("_elasticity", 0.04f); dyn.SetFloat("_damping", s.soft ? 0.3f : 0.02f);
+        var vol = (Material)map[AssetDatabase.LoadMainAssetAtPath(Chain[13])];
+        vol.SetTexture("_MochiMask2", mask);
+        vol.SetColor("_Color", s.color); vol.SetColor("_FogColor", s.fog); vol.SetFloat("_Transparency", s.clear);
+        if (s.soft)
+        {
+            // The jelly is lit like a 60% metal surface, and the Pole's light is dim, so plain white came out dark maroon.
+            // The cloud gets no metal and a soft white glow (the shader's add-on "MatCap"), a touch brighter at the rim.
+            var px = new Color32[TexN * TexN];
+            for (int j = 0; j < TexN; j++)
+                for (int i = 0; i < TexN; i++)
+                {
+                    float x = (i + 0.5f) / TexN * 2 - 1, y = (j + 0.5f) / TexN * 2 - 1;
+                    byte v = (byte)Mathf.RoundToInt(255 * Mathf.Clamp01(0.78f + 0.22f * (x * x + y * y)));
+                    px[j * TexN + i] = new Color32(v, v, v, 255);
+                }
+            vol.SetTexture("_MatCap", SaveLinear(px, dir + "jelly-" + s.name + "-glow" + Stamp + ".png"));
+            vol.SetFloat("_MatCapPower", 0.85f); vol.SetFloat("_Metallic", 0f); vol.SetFloat("_Glossiness", 0.55f);
+        }
+        EditorUtility.SetDirty(dyn); EditorUtility.SetDirty(vol);
+        AssetDatabase.SaveAssets();
+        return ((RenderTexture)map[AssetDatabase.LoadMainAssetAtPath(Chain[0])], vol);
+    }
+
+    [MenuItem("Astra/Claude/Jelly bed 10 shapes round")]
+    public static void ShapesRound()
+    {
+        Directory.CreateDirectory(Out);
+        Physics.SyncTransforms();
+        var rep = new List<string> { "# Jelly shapes round " + System.DateTime.Now.ToString("yyyy-MM-dd HH:mm"), "" };
+        var bed = GameObject.Find(RootName); var deck = GameObject.Find(CinemaRoot);
+        if (!bed || !deck) { rep.Add("FAIL: no " + (bed ? "" : RootName + " ") + (deck ? "" : CinemaRoot)); Write(rep, "shapes.md"); return; }
+
+        // 1. No rainbow chairs.
+        var chairs = deck.transform.Find("Rainbow chairs");
+        if (chairs) { Undo.DestroyObjectImmediate(chairs.gameObject); rep.Add("- removed the 7 rainbow chairs"); }
+        foreach (var c in new[] { "red", "orange", "yellow", "green", "blue", "purple", "pink" })
+            AssetDatabase.DeleteAsset("Assets/Astra/Materials/Rainbow chair " + c + ".mat");
+
+        // 2. The star bed's jelly: unpacked, so its debug plane can go and its links can point at the star's own chain.
+        var jelly = bed.GetComponentsInChildren<Transform>(true).First(t => t.name == "MochiMochiJelly").gameObject;
+        if (PrefabUtility.IsPartOfPrefabInstance(jelly)) PrefabUtility.UnpackPrefabInstance(PrefabUtility.GetOutermostPrefabInstanceRoot(jelly), PrefabUnpackMode.Completely, InteractionMode.AutomatedAction);
+        var plane = jelly.transform.Find("Plane");
+        if (plane) { Undo.DestroyObjectImmediate(plane.gameObject); rep.Add("- removed the package's floating debug plane (it showed the dent texture, with a collider, 2 m up)"); }
+
+        // The cup's floor was a deep navy that read as a black hole around the star: now a soft glowing sky blue.
+        var floorMat = BaseMaterial();
+        floorMat.SetColor("_Color", new Color(0.55f, 0.78f, 1f)); floorMat.SetColor("_EmissionColor", new Color(0.35f, 0.6f, 1f) * 0.55f);
+        EditorUtility.SetDirty(floorMat);
+
+        var old = GameObject.Find(ShapesRoot);
+        if (old) Undo.DestroyObjectImmediate(old);
+        var root = new GameObject(ShapesRoot); Undo.RegisterCreatedObjectUndo(root, "Jelly shapes");
+        var frame = deck.transform; var n = frame.forward; // +z points away from the screen
+        var moving = MovingRenderers();
+        Physics.SyncTransforms();
+        var fixedR = Object.FindObjectsOfType<MeshRenderer>().Where(r => r.enabled && r.bounds.size.magnitude < 150f && !r.transform.IsChildOf(bed.transform)).Select(r => r.bounds).ToList();
+        var placed = new List<Vector3> { frame.position };
+
+        foreach (var s in Shapes())
+        {
+            var dir = JellyDir + "jelly-" + s.name + Stamp + "/";
+            Directory.CreateDirectory(dir);
+            var (mask, height) = ShapeTextures(s, dir);
+            var (dentRT, vol) = CopyChain(s, dir, mask, height, rep);
+            if (!vol) break;
+
+            GameObject j; Transform at;
+            if (s.name == "star") { j = jelly; at = bed.transform; }
+            else
+            {
+                // Somewhere clear on the ground behind or beside the cup, not between it and the screen, 7.5 m from the others.
+                Vector3 want = frame.TransformPoint(new Vector3(s.prefer.x, 0, s.prefer.y)), best = Vector3.zero; float bestD = float.MaxValue;
+                for (float dx = -12; dx <= 12; dx += 1f)
+                    for (float dz = -12; dz <= 12; dz += 1f)
+                    {
+                        var p = want + new Vector3(dx, 0, dz); p.y = frame.position.y;
+                        float dd = new Vector2(dx, dz).magnitude;
+                        if (dd >= bestD || frame.InverseTransformPoint(p).z < -1f || placed.Any(q => Vector3.Distance(q, p) < 7f)) continue;
+                        if (!Physics.Raycast(p + Vector3.up * 2, Vector3.down, out var g, 4, ~0, QueryTriggerInteraction.Ignore) || Mathf.Abs(g.point.y - p.y) > 0.3f) continue;
+                        if (Clear(p, moving, fixedR)) { best = p; bestD = dd; }
+                    }
+                if (bestD == float.MaxValue) { rep.Add("- " + s.name + ": FAIL no clear ground near " + want.ToString("0.0")); continue; }
+                placed.Add(best);
+                var holder = new GameObject("Jelly " + s.name); holder.transform.SetParent(root.transform, false);
+                holder.transform.SetPositionAndRotation(best, Quaternion.LookRotation(-n) * Quaternion.Euler(0, (s.prefer.x > 0 ? 1 : -1) * 18f, 0));
+                j = Object.Instantiate(jelly, holder.transform); j.name = "MochiMochiJelly";
+                j.transform.localPosition = Vector3.zero; j.transform.localRotation = Quaternion.identity;
+                // Shared scene-behind cameras: only the star's draw. These stay as head-followers for the matrices their script sets.
+                foreach (var cam in j.GetComponentsInChildren<Camera>(true).Where(c => c.name.StartsWith("CameraBackground"))) cam.enabled = false;
+                foreach (var al in j.GetComponentsInChildren<AudioListener>(true)) al.enabled = false;
+                at = holder.transform;
+                rep.Add("- " + s.name + ": at " + best.ToString("0.0") + ", " + Vector3.Distance(best, frame.position).ToString("0.0") + " m from the cup");
+            }
+            var dent = j.GetComponentsInChildren<Camera>(true).First(c => c.name == "Camera");
+            Undo.RecordObject(dent, "Jelly dent"); dent.targetTexture = dentRT;
+            var cube = j.transform.Find("Cube").GetComponent<MeshRenderer>();
+            Undo.RecordObject(cube, "Jelly material"); cube.sharedMaterial = vol;
+            if (s.name == "star") rep.Add("- star: the cup's jelly, its own chain in `" + dir + "`");
+        }
+        foreach (var al in jelly.GetComponentsInChildren<AudioListener>(true)) al.enabled = false;
+
+        // 3. The jelly hides behind things using the camera's depth picture; the Glitter Cloud shader never drew into it, so
+        //    every cloud in front of a jelly was painted over. Report what near the deck still has no depth (shadow) pass.
+        var noDepth = Object.FindObjectsOfType<Renderer>().Where(r => r.enabled && Vector3.Distance(r.bounds.center, frame.position) < 45f)
+            .SelectMany(r => r.sharedMaterials).Where(m => m && m.renderQueue < 2500 && m.FindPass("ShadowCaster") < 0).Select(m => m.shader.name).Distinct().ToList();
+        rep.Add("- opaque shaders near the deck still without a depth pass: " + (noDepth.Count == 0 ? "none" : string.Join(", ", noDepth)));
+
+        UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(root.scene);
+        AssetDatabase.SaveAssets();
+        Write(rep, "shapes.md");
+    }
+
+    // A map of the ground around the deck (what blocks each 2 m cell), for choosing jelly spots, and a snapshot of each
+    // jelly's last dent texture (white = flat, black = full height), to see whether its chain is running.
+    [MenuItem("Astra/Claude/Jelly bed 12 ground map")]
+    public static void WakeAndMap()
+    {
+        var deck = GameObject.Find(CinemaRoot); var bed = GameObject.Find(RootName); var shapes = GameObject.Find(ShapesRoot);
+        var rep = new List<string> { "# Jelly ground map " + System.DateTime.Now.ToString("yyyy-MM-dd HH:mm"), "" };
+        foreach (var g in AssetDatabase.FindAssets("crtblury t:CustomRenderTexture", new[] { "Assets/Astra/Jelly" }).Append(AssetDatabase.AssetPathToGUID("Assets/DynamicMochiMochi/source/CRTBlurY.asset")))
+        {
+            var path = AssetDatabase.GUIDToAssetPath(g); var crt = AssetDatabase.LoadAssetAtPath<CustomRenderTexture>(path);
+            if (!crt || !crt.IsCreated()) { rep.Add("- `" + path + "`: not created"); continue; }
+            var prev = RenderTexture.active; RenderTexture.active = crt;
+            var t = new Texture2D(crt.width, crt.height, TextureFormat.RGBA32, false, true); t.ReadPixels(new Rect(0, 0, crt.width, crt.height), 0, 0); t.Apply();
+            RenderTexture.active = prev;
+            var px = t.GetPixels32(); float mean = (float)px.Average(p => p.r) / 255f;
+            File.WriteAllBytes(Path.Combine(Out, "dent-" + Path.GetFileNameWithoutExtension(path) + ".png"), t.EncodeToPNG()); Object.DestroyImmediate(t);
+            rep.Add("- `" + path + "`: mean " + mean.ToString("0.00") + " (0 = a full box, 1 = flat)");
+        }
+        rep.Add("");
+        if (deck)
+        {
+            Physics.SyncTransforms();
+            var moving = MovingRenderers();
+            var fixedR = Object.FindObjectsOfType<MeshRenderer>().Where(r => r.enabled && r.bounds.size.magnitude < 150f
+                && !(bed && r.transform.IsChildOf(bed.transform)) && !(shapes && r.transform.IsChildOf(shapes.transform))).ToList();
+            var f = deck.transform;
+            rep.Add("Deck-local map, 2 m cells, x across (-30..30), rows from the screen side (z -14) to behind (z 34). Centre = cup.");
+            rep.Add("`.` free for a 5 m jelly, `c` collider, `r` a still renderer (first one named below), `m` orbit path, `g` no ground at deck height, `S` screen.");
+            var why = new Dictionary<string, int>();
+            for (float z = -14; z <= 34; z += 2)
+            {
+                var row = new System.Text.StringBuilder(z.ToString("00").PadLeft(3) + " ");
+                for (float x = -30; x <= 30; x += 2)
+                {
+                    var p = f.TransformPoint(new Vector3(x, 0, z)); p.y = f.position.y;
+                    var box = new Bounds(p + Vector3.up * 1.2f, new Vector3(Half * 2 + 1, 2.2f, Half * 2 + 1));
+                    char ch = '.';
+                    if (!Physics.Raycast(p + Vector3.up * 2, Vector3.down, out var gh, 4, ~0, QueryTriggerInteraction.Ignore) || Mathf.Abs(gh.point.y - p.y) > 0.3f) ch = 'g';
+                    else if (Physics.OverlapBox(box.center, box.extents, Quaternion.identity, ~0, QueryTriggerInteraction.Ignore).Length > 0) ch = 'c';
+                    else
+                    {
+                        var hit = fixedR.FirstOrDefault(r => r.bounds.Intersects(box));
+                        if (hit) { ch = 'r'; var k = hit.name; why[k] = why.TryGetValue(k, out var v) ? v + 1 : 1; }
+                        else if (!Clear(p, moving, new List<Bounds>())) ch = 'm';
+                    }
+                    if (Mathf.Abs(x) < 1 && Mathf.Abs(z) < 1) ch = 'O';
+                    row.Append(ch);
+                }
+                rep.Add("    " + row);
+            }
+            rep.Add(""); rep.Add("Still renderers in the way (cells):");
+            foreach (var kv in why.OrderByDescending(k => k.Value).Take(15)) rep.Add("- " + kv.Key + ": " + kv.Value);
+            rep.Add(""); rep.Add("Colliders at sample cells:");
+            foreach (var s in new[] { new Vector2(0, 10), new Vector2(-16, 4), new Vector2(16, 16), new Vector2(0, 24), new Vector2(-24, 30) })
+            {
+                var p = f.TransformPoint(new Vector3(s.x, 0, s.y)); p.y = f.position.y;
+                rep.Add("- cell " + s + " world " + p.ToString("0.0") + ":");
+                foreach (var c in Physics.OverlapBox(p + Vector3.up * 1.2f, new Vector3(Half + 0.5f, 1.1f, Half + 0.5f), Quaternion.identity, ~0, QueryTriggerInteraction.Ignore).Take(8))
+                    rep.Add("  - `" + PathOf(c.transform) + "` " + c.GetType().Name + " bounds min " + c.bounds.min.ToString("0.0") + " max " + c.bounds.max.ToString("0.0"));
+            }
+        }
+        Write(rep, "wake-map.md");
+    }
+
+    [MenuItem("Astra/Claude/Jelly bed 11 shapes photos")]
+    public static void ShapePhotos()
+    {
+        var deck = GameObject.Find(CinemaRoot);
+        var root = GameObject.Find(ShapesRoot);
+        if (!deck) return;
+        // The dent textures only run in VRChat (in the editor they are never created, so a jelly fills its box). For the
+        // photos each jelly briefly shows its resting shape (its height map); the real dent texture goes straight back.
+        var swapped = new List<(Material m, Texture was)>();
+        foreach (var m in Object.FindObjectsOfType<MeshRenderer>().Where(r => r.name == "Cube").Select(r => r.sharedMaterial).Where(m => m && m.HasProperty("_MochiMask")).Distinct())
+        {
+            var hp = AssetDatabase.GetAssetPath(m).Replace("-mochivolume-", "-height-").Replace(".mat", ".png");
+            var h = AssetDatabase.LoadAssetAtPath<Texture2D>(hp);
+            if (h) { swapped.Add((m, m.GetTexture("_MochiMask"))); m.SetTexture("_MochiMask", h); }
+        }
+        try { TakeShapePhotos(deck, root); }
+        finally { foreach (var (m, was) in swapped) m.SetTexture("_MochiMask", was); }
+    }
+
+    static void TakeShapePhotos(GameObject deck, GameObject root)
+    {
+        var o = deck.transform.position; var n = deck.transform.forward;
+        // The jelly's scene-behind cameras only run in VRChat (driven by its script), so in these photos the see-through
+        // parts can look darker than in the world. Rendering those cameras by hand here preceded an editor crash; don't.
+        ShotFrom("round3-from-screen", o + n * 6 + Vector3.up * 1f, o - n * 9 + Vector3.up * 9);
+        ShotFrom("round3-from-pole", o + n * 4, o + n * 26 + Vector3.up * 8);
+        ShotFrom("round3-star-close", o + Vector3.up * 0.5f, o + Quaternion.Euler(0, 35, 0) * -n * 6 + Vector3.up * 4.5f);
+        ShotFrom("round3-star-top", o, o + Vector3.up * 9 - n * 0.5f);
+        if (root)
+            foreach (Transform t in root.transform)
+                ShotFrom("round3-" + t.name.ToLower().Replace(' ', '-'), t.position + Vector3.up * 0.5f, t.position + (Quaternion.Euler(0, 30, 0) * (t.position - o).normalized) * 6.5f + Vector3.up * 4f);
     }
 
     static void Write(List<string> rep, string file) => File.WriteAllText(Path.Combine(Out, file), string.Join("\n", rep) + "\n");

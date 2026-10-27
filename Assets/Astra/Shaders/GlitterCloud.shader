@@ -114,5 +114,8 @@ Shader "Astra/Glitter Cloud" {
   return half4(lerp(calm,storm,_UdonStorm),1);
  }
  ENDCG }
+ // 2026-10-27 (Claude, jelly beds): a depth/shadow pass, so the jelly beds (which hide behind whatever is in the camera's
+ // depth picture) stop drawing over clouds in front of them. Only the jellies' shadow-only sun casts shadows, and it lights nothing.
+ UsePass "Legacy Shaders/VertexLit/SHADOWCASTER"
  }
 }

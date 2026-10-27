@@ -66,3 +66,40 @@ purple and pink chairs in a loose pattern, different sizes.
 
 Open after round 2: sitting position on each chair not checked in the client; the jelly dent still not felt; Astra may
 send a drawing for the chair layout.
+
+## Round 3 (2026-10-27, Astra in chat)
+
+Asked: "get rid of the rainbow chairs", the bubble showed over the clouds, "first lets try the shape of a star", "can we do
+more than one in a world? give a bunch of different ones", and a white standalone cloud jelly, "basically all spheres".
+
+- **Chairs gone** (menu Jelly bed 10), their 7 materials deleted. The cup stays.
+- **Bubble over the clouds:** the jelly hides behind things using the camera's depth picture, and `Astra/Glitter Cloud`
+  had no depth/shadow pass, so every cloud in front of a jelly was painted over. Added
+  `UsePass "Legacy Shaders/VertexLit/SHADOWCASTER"` (plain vertex shader, so it matches). Only the jellies' shadow-only
+  sun casts shadows and it lights nothing, so clouds look the same. Still without a depth pass near the deck (report):
+  Unity Stable/Handmade PBR, Astra/Infinite Pole, Unlit/Texture, Astra/Cloud Sea.
+- **More than one per world:** the package says its prefabs can't share a world because they read the same render
+  textures. Each jelly now has its own copy of the dent chain (dent camera texture, six custom render textures, their
+  materials, its own jelly material) in `Assets/Astra/Jelly/jelly-<shape>-20261027/`. The two head-following
+  scene-behind cameras are only switched on in the star (the others' Camera components are off; their script still runs
+  for its matrices). Cost per extra jelly: one small dent camera and six 1024² texture passes a frame.
+- **Shapes** = the package's own Mask (`_MaskTex`, white = jelly) and Height map (`_HeightTex`, black = tallest),
+  generated as 512² linear PNGs: star (in the cup, blue), heart (pink), moon (lavender), flower (mint), and the **white
+  cloud**: a heap of sphere domes, no metal, a soft white MatCap glow (the jelly is lit like 60% metal and the Pole's
+  light is dim, so plain white came out maroon). The four extras stand together on open ground past the pole
+  ((-24..-30, 0, -12..6)); the ground around the cinema is full (cloud lounge on both sides, the spiral behind).
+- The package's floating debug plane (showed the dent texture, with a MeshCollider 2 m up) was removed from the bed.
+- The cup floor is now a soft glowing sky blue.
+
+Editor traps found this round:
+- The custom render textures never run in the editor (`IsCreated` false), so a jelly fills its whole box there. Menu 11
+  (photos) briefly shows each jelly's height map instead; in VRChat the real dent runs.
+- **The Pole editor crashed three times** (SIGSEGV in `Camera::SetRenderTargetAndViewport` during a repaint, after
+  "SetRenderTargets: Cannot set a depth surface as a color render target"). Each came after re-copying / re-importing
+  the jelly render textures or rendering the scene-behind cameras by hand. Menu 10 now reuses existing copies and the
+  photos no longer render those cameras; the last session ran clean. Crash logs: `Logs/claude-jelly-crash-*.log`.
+- Rerunning menu 10 rebuilds the four extras; don't run menu 6 again (it would bring the chairs back).
+
+Desktop test 2026-10-27 05:30:22: fresh build, entered the world, no Udon errors. Not checked in the client: how each
+jelly looks and dents with a body, and the frame rate with five jellies. Backup before round 3:
+`Review/Backups/jelly-bed-20261026/AstrasInfinitePole-before-round3.unity`.
